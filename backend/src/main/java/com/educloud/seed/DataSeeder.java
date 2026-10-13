@@ -73,38 +73,41 @@ public class DataSeeder implements CommandLineRunner {
     private final Random random = new Random(42);
 
     @Override
-    @Transactional
     public void run(String... args) {
         if (!seedEnabled) return;
-        if (userRepository.count() > 0) {
-            log.info("Database already has data — skipping seed.");
-            return;
+        try {
+            if (userRepository.count() > 0 || departmentRepository.count() > 0) {
+                log.info("Database already contains data — skipping seed.");
+                return;
+            }
+            log.info("Seeding EduCloud sample data...");
+
+            List<Department> departments = seedDepartments();
+            List<Course> courses = seedCourses(departments);
+            List<SchoolClass> classes = seedClasses(courses);
+            List<Subject> subjects = seedSubjects(classes);
+            List<Faculty> facultyList = seedFaculty(departments);
+            assignFacultyToSubjects(facultyList, subjects, classes);
+            List<Student> students = seedStudents(departments, courses, classes);
+            seedAdmin();
+            List<Location> locations = seedLocations();
+            List<AttendanceSession> sessions = seedAttendanceSessions(subjects, classes, facultyList, locations);
+            seedAttendanceRecords(sessions, classes, students);
+            seedMarks(students, subjects, classes, facultyList);
+            List<Assessment> assessments = seedAssessments(subjects, classes, facultyList);
+            List<Assignment> assignments = seedAssignments(subjects, classes, facultyList);
+            seedSubmissions(assignments, classes, students);
+            seedTimetable(classes, subjects, facultyList);
+            seedCourseMaterials(subjects, facultyList);
+            seedAnnouncements(students, facultyList);
+            seedNotifications(students, facultyList);
+            seedFeedback(students, facultyList, subjects);
+            seedFees(students);
+
+            log.info("EduCloud sample data seeded successfully.");
+        } catch (Exception ex) {
+            log.warn("Sample data seeding encountered an issue, skipping seed: {}", ex.getMessage());
         }
-        log.info("Seeding EduCloud sample data...");
-
-        List<Department> departments = seedDepartments();
-        List<Course> courses = seedCourses(departments);
-        List<SchoolClass> classes = seedClasses(courses);
-        List<Subject> subjects = seedSubjects(classes);
-        List<Faculty> facultyList = seedFaculty(departments);
-        assignFacultyToSubjects(facultyList, subjects, classes);
-        List<Student> students = seedStudents(departments, courses, classes);
-        seedAdmin();
-        List<Location> locations = seedLocations();
-        List<AttendanceSession> sessions = seedAttendanceSessions(subjects, classes, facultyList, locations);
-        seedAttendanceRecords(sessions, classes, students);
-        seedMarks(students, subjects, classes, facultyList);
-        List<Assessment> assessments = seedAssessments(subjects, classes, facultyList);
-        List<Assignment> assignments = seedAssignments(subjects, classes, facultyList);
-        seedSubmissions(assignments, classes, students);
-        seedTimetable(classes, subjects, facultyList);
-        seedCourseMaterials(subjects, facultyList);
-        seedAnnouncements(students, facultyList);
-        seedNotifications(students, facultyList);
-        seedFeedback(students, facultyList, subjects);
-        seedFees(students);
-
-        log.info("EduCloud sample data seeded successfully.");
     }
 
     // ---------------- Departments / Courses / Classes / Subjects ----------------
