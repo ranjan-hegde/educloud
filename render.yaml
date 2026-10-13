@@ -1,0 +1,85 @@
+# Render Blueprint — deploy backend + frontend in one click.
+# See https://render.com/docs/blueprint-spec
+#
+# Usage: push this repo to GitHub, then go to https://dashboard.render.com/
+#        → New → Blueprint → connect repo.
+
+services:
+  # ── Backend (Spring Boot via Docker) ──────────────────────────
+  - type: web
+    name: educloud-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    region: oregon
+    plan: free
+    healthCheckPath: /actuator/health
+    envVars:
+      # Database (use Aiven / Railway / PlanetScale MySQL)
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "3306"
+      - key: DB_NAME
+        value: educloud
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      # Spring
+      - key: DDL_AUTO
+        value: update
+      - key: SEED_ENABLED
+        value: "true"
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      # JWT
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRATION_MS
+        value: "86400000"
+      # CORS — set this to your Vercel frontend URL
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      # Mail
+      - key: MAIL_HOST
+        value: smtp.gmail.com
+      - key: MAIL_PORT
+        value: "587"
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_FROM
+        value: no-reply@educloud.local
+      - key: MAIL_FAIL_SILENTLY
+        value: "true"
+      # Frontend URL (for password-reset links etc.)
+      - key: FRONTEND_BASE_URL
+        sync: false
+      # Gemini AI
+      - key: GEMINI_API_KEY
+        sync: false
+      # File uploads
+      - key: UPLOAD_DIR
+        value: /app/uploads
+
+  # ── Frontend (static site — OPTIONAL, use Vercel instead) ────
+  # Uncomment below if you want to host the frontend on Render too.
+  # - type: web
+  #   name: educloud-frontend
+  #   runtime: static
+  #   buildCommand: cd frontend && npm install && npm run build
+  #   staticPublishPath: frontend/dist
+  #   headers:
+  #     - path: /*
+  #       name: Cache-Control
+  #       value: public, max-age=0, must-revalidate
+  #   routes:
+  #     - type: rewrite
+  #       source: /*
+  #       destination: /index.html
+  #   envVars:
+  #     - key: VITE_API_URL
+  #       sync: false
+

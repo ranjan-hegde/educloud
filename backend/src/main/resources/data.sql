@@ -1,0 +1,19 @@
+-- Sample data for EduCloud is NOT seeded from this file.
+--
+-- Generating ~800 correctly-linked rows (users, students, faculty, classes,
+-- subjects, attendance sessions, attendance records, marks, assessments,
+-- assignments, submissions, timetable entries, materials, announcements,
+-- notifications, feedback, and fees) by hand in raw SQL is exactly the kind
+-- of thing that silently drifts out of sync with the JPA schema, produces
+-- invalid foreign keys, or ships plaintext passwords by accident.
+--
+-- Instead, sample data is seeded by a real Java component:
+--   src/main/java/com/educloud/seed/DataSeeder.java
+--
+-- It runs automatically once, the first time you start the app against an
+-- empty database (it checks `if (userRepository.count() > 0) return;`, so
+-- it's safe to leave enabled — it will never duplicate data on restart).
+-- Passwords are BCrypt-hashed exactly the same way real registrations are.
+--
+-- To disable seeding entirely (e.g. in a shared/staging environment):
+--   SEED_ENABLED=false
