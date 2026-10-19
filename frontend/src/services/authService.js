@@ -5,6 +5,7 @@
 import api from "./api";
 import { delay, mockError } from "./_utils";
 import { currentStudent, currentFaculty, currentAdmin } from "../data/mockData";
+import { setCookie, deleteCookie } from "../utils/cookieUtils";
 
 const DEMO_ACCOUNTS = {
   "student@example.com": { password: "demo1234", profile: currentStudent },
@@ -69,7 +70,7 @@ export async function login({ email, password, role }) {
       }
 
       const fullUser = {
-        id: serverUser.id || serverUser.profileId || `USR${Date.now().toString().slice(-4)}`,
+        id: String(serverUser.id || serverUser.profileId || `USR${Date.now().toString().slice(-4)}`),
         name: serverUser.name || email.split("@")[0],
         email: serverUser.email || email,
         phone: serverUser.phone || "",
@@ -81,6 +82,9 @@ export async function login({ email, password, role }) {
         rollNo: detailedProfile.rollNo || `STU${Date.now().toString().slice(-4)}`,
         ...detailedProfile,
       };
+
+      setCookie("educloud_token", authData.token, 30);
+      setCookie("educloud_user", JSON.stringify(fullUser), 30);
 
       return { token: authData.token, user: fullUser };
     }
@@ -105,7 +109,11 @@ export async function login({ email, password, role }) {
     return mockError(`This account is registered as ${account.profile.role}, not ${label}.`);
   }
 
-  return delay({ token: "local-token-" + Date.now(), user: account.profile }, 500);
+  const localToken = "local-token-" + Date.now();
+  setCookie("educloud_token", localToken, 30);
+  setCookie("educloud_user", JSON.stringify(account.profile), 30);
+
+  return delay({ token: localToken, user: account.profile }, 500);
 }
 
 /**
@@ -224,7 +232,7 @@ export async function loginWithGoogle({ googleUser, role = "student" }) {
       }
 
       const fullUser = {
-        id: serverUser.id || serverUser.profileId || `GOOG${Date.now().toString().slice(-4)}`,
+        id: String(serverUser.id || serverUser.profileId || `GOOG${Date.now().toString().slice(-4)}`),
         name: serverUser.name || name,
         email: serverUser.email || email,
         phone: serverUser.phone || "",
@@ -237,6 +245,9 @@ export async function loginWithGoogle({ googleUser, role = "student" }) {
         ...detailed,
       };
 
+      setCookie("educloud_token", authData.token, 30);
+      setCookie("educloud_user", JSON.stringify(fullUser), 30);
+
       return { token: authData.token, user: fullUser };
     }
   } catch {
@@ -247,7 +258,10 @@ export async function loginWithGoogle({ googleUser, role = "student" }) {
   const existing = findAccount(email);
   if (existing) {
     const user = { ...existing.profile, name, avatar };
-    return delay({ token: "google-token-" + Date.now(), user }, 400);
+    const token = "google-token-" + Date.now();
+    setCookie("educloud_token", token, 30);
+    setCookie("educloud_user", JSON.stringify(user), 30);
+    return delay({ token, user }, 400);
   }
 
   const idPrefix = role === "student" ? "STU" : role === "faculty" ? "FAC" : "ADM";
@@ -283,7 +297,11 @@ export async function loginWithGoogle({ googleUser, role = "student" }) {
   registered[email] = { password: "google-oauth-account", profile };
   saveRegisteredUsers(registered);
 
-  return delay({ token: "google-token-" + Date.now(), user: profile }, 400);
+  const token = "google-token-" + Date.now();
+  setCookie("educloud_token", token, 30);
+  setCookie("educloud_user", JSON.stringify(profile), 30);
+
+  return delay({ token, user: profile }, 400);
 }
 
 export function forgotPassword(email) {
@@ -305,5 +323,8 @@ export function logout() {
     // ignore
   }
   localStorage.removeItem("educloud_token");
+  sessionStorage.removeItem("educloud_token");
+  deleteCookie("educloud_token");
+  deleteCookie("educloud_user");
   return delay({ success: true }, 200);
 }

@@ -5,17 +5,22 @@
 // Set VITE_API_URL in your .env (or Vercel Environment Variables):
 //   VITE_API_URL=https://educloud-backend.onrender.com
 
+import { getCookie } from '../utils/cookieUtils';
+
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 /**
  * Thin wrapper around fetch that:
  *  - prepends the API base URL
- *  - attaches the JWT token from localStorage
+ *  - attaches the JWT token from localStorage or cookie
  *  - sets JSON Content-Type for non-FormData bodies
  *  - throws on non-2xx responses with the server error message
  */
 export async function api(path, options = {}) {
-  const token = localStorage.getItem('educloud_token');
+  const token =
+    localStorage.getItem('educloud_token') ||
+    sessionStorage.getItem('educloud_token') ||
+    getCookie('educloud_token');
 
   const headers = { ...(options.headers || {}) };
 

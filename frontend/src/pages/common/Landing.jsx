@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { useState } from "react";
 import {
   Cloud, QrCode, MapPin, GraduationCap, CalendarDays, Bell, Bot, Users, ShieldCheck,
@@ -36,7 +36,12 @@ import { useAuth } from "../../context/AuthContext";
 
 export default function Landing() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  // If already authenticated via cookies or storage, redirect directly to their dashboard.
+  if (!loading && user?.role) {
+    return <Navigate to={`/${user.role}/dashboard`} replace />;
+  }
 
   return (
     <div className="bg-transparent">
@@ -55,17 +60,8 @@ export default function Landing() {
           </nav>
 
           <div className="hidden md:flex items-center gap-3">
-            {user ? (
-              <Link to={`/${user.role}/dashboard`} className="btn-primary !py-2 flex items-center gap-2">
-                <span>Go to Dashboard ({user.name.split(" ")[0]})</span>
-                <ArrowRight size={14} />
-              </Link>
-            ) : (
-              <>
-                <Link to="/login" className="btn-outline !py-2">Login</Link>
-                <Link to="/register" className="btn-primary !py-2">Register</Link>
-              </>
-            )}
+            <Link to="/login" className="btn-outline !py-2">Login</Link>
+            <Link to="/register" className="btn-primary !py-2">Register</Link>
           </div>
 
           <button className="md:hidden text-navy-700" onClick={() => setMenuOpen((o) => !o)}>

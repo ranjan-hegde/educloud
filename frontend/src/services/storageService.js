@@ -3,12 +3,16 @@
 // Guarantees each student and faculty member only sees their OWN data and records.
 
 import * as mock from "../data/mockData";
+import { getCookie } from "../utils/cookieUtils";
 
 const NAMESPACE = "educloud_data";
 
 export function getCurrentUser() {
   try {
-    const raw = localStorage.getItem("educloud_user") || sessionStorage.getItem("educloud_user");
+    const raw =
+      localStorage.getItem("educloud_user") ||
+      sessionStorage.getItem("educloud_user") ||
+      getCookie("educloud_user");
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -33,8 +37,13 @@ const USER_SCOPED_KEYS = new Set([
 function resolveStorageKey(key) {
   if (!USER_SCOPED_KEYS.has(key)) return key;
   const user = getCurrentUser();
-  if (!user?.id && !user?.email) return key;
-  const userIdent = (user.id || user.email).replace(/[^a-zA-Z0-9_-]/g, "_");
+  if (!user) return key;
+  const rawId =
+    user.id !== undefined && user.id !== null && user.id !== ""
+      ? user.id
+      : (user.email || user.uid);
+  if (!rawId) return key;
+  const userIdent = String(rawId).replace(/[^a-zA-Z0-9_-]/g, "_");
   return `user_${userIdent}_${key}`;
 }
 
