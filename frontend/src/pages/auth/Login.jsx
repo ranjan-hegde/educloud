@@ -1,22 +1,52 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, Loader2, ArrowRight } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import GoogleSignInButton from "../../components/GoogleSignInButton";
+import { checkUserExists, register } from "../../services/authService";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState("student");
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [userStatus, setUserStatus] = useState(null); // null = unknown/typing, { exists: true }, { exists: false }
+  const [checkingUser, setCheckingUser] = useState(false);
 
   const { login } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    const clean = email.trim().toLowerCase();
+    if (!clean || !/\S+@\S+\.\S+/.test(clean)) {
+      setUserStatus(null);
+      return;
+    }
+
+    let active = true;
+    const timer = setTimeout(async () => {
+      setCheckingUser(true);
+      try {
+        const res = await checkUserExists(clean);
+        if (active) setUserStatus(res);
+      } catch {
+        if (active) setUserStatus({ exists: false, role: null });
+      } finally {
+        if (active) setCheckingUser(false);
+      }
+    }, 350);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [email]);
 
   function validate() {
     const errs = {};
@@ -32,13 +62,30 @@ export default function Login() {
     if (!validate()) return;
     setLoading(true);
     try {
-      // Role is automatically detected from the user's account!
-      const user = await login({ email, password, remember });
+      // If user does not exist in database, register them first with their chosen role
+      if (userStatus && !userStatus.exists) {
+        await register({
+          fullName: email.split("@")[0],
+          email: email.trim().toLowerCase(),
+          password,
+          role,
+        });
+      }
+
+      // Role is automatically detected from the user's account in database!
+      const user = await login({ email, password, role, remember });
       toast.success(`Welcome back, ${user.name.split(" ")[0]}!`);
       const from = location.state?.from || `/${user.role}/dashboard`;
       navigate(from, { replace: true });
     } catch (err) {
-      toast.error(err.message || "Login failed. Please check your credentials.");
+      const msg = err.message || "";
+      if (msg.includes("No account found") || msg.includes("Account not found")) {
+        // User not found in database — reveal role selector so user can register
+        setUserStatus({ exists: false, role: null });
+        toast.info("No existing account found. Please select your role to register.");
+      } else {
+        toast.error(msg || "Login failed. Please check your credentials.");
+      }
     } finally {
       setLoading(false);
     }
@@ -52,6 +99,7 @@ export default function Login() {
     };
     setEmail(map[demoRole]);
     setPassword("demo1234");
+    setUserStatus({ exists: true, role: demoRole });
   }
 
   return (
@@ -115,6 +163,32 @@ export default function Login() {
           {errors.password && <p className="text-xs text-rose-500 mt-1 font-medium">{errors.password}</p>}
         </div>
 
+        {/* Role Selection is ONLY shown if user does NOT already exist in database */}
+        {userStatus && !userStatus.exists && (
+          <div className="rounded-2xl bg-teal-50/80 border border-teal-200/90 p-4 animate-fade-in space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-teal-950 uppercase tracking-wider">New Account Detected</span>
+              <span className="text-[11px] text-teal-700 font-medium">Select your campus role</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {["student", "faculty", "admin"].map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setRole(r)}
+                  className={`py-2 px-3 rounded-xl text-xs font-semibold capitalize transition-all border ${
+                    role === r
+                      ? "bg-navy-900 text-white border-navy-900 shadow-sm"
+                      : "bg-white text-navy-700 border-slate-200 hover:border-teal-400"
+                  }`}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center justify-between text-xs sm:text-sm pt-1">
           <label className="flex items-center gap-2 text-slate-600 cursor-pointer select-none">
             <input
@@ -137,7 +211,12 @@ export default function Login() {
         >
           {loading ? (
             <>
-              <Loader2 size={18} className="animate-spin" /> Signing in...
+              <Loader2 size={18} className="animate-spin" />{" "}
+              {userStatus && !userStatus.exists ? "Creating Account..." : "Signing in..."}
+            </>
+          ) : userStatus && !userStatus.exists ? (
+            <>
+              Register as {role.charAt(0).toUpperCase() + role.slice(1)} & Sign In <ArrowRight size={17} />
             </>
           ) : (
             <>

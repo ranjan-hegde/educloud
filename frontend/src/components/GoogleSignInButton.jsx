@@ -4,15 +4,7 @@ import { Loader2, GraduationCap, Users, Shield } from "lucide-react";
 import { signInWithGoogle, isFirebaseConfigured } from "../services/firebase";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-
-function checkExistingUser(email) {
-  try {
-    const registered = JSON.parse(localStorage.getItem("educloud_registered_users")) || {};
-    return registered[email.trim().toLowerCase()] || null;
-  } catch {
-    return null;
-  }
-}
+import { checkUserExists } from "../services/authService";
 
 export default function GoogleSignInButton({ role, text = "Continue with Google" }) {
   const [loading, setLoading] = useState(false);
@@ -33,19 +25,20 @@ export default function GoogleSignInButton({ role, text = "Continue with Google"
     setLoading(true);
     try {
       const googleUser = await signInWithGoogle();
-      const existingAccount = checkExistingUser(googleUser.email);
+      const userCheck = await checkUserExists(googleUser.email);
 
-      // If already registered OR role was pre-selected, proceed directly!
-      if (existingAccount || role) {
+      // If user already existed in database OR role was passed as prop:
+      // Proceed directly without role selection!
+      if (userCheck.exists || role) {
         const user = await loginWithGoogle({
           googleUser,
-          role: existingAccount?.profile?.role || role || "student",
+          role: userCheck.role || role || "student",
           remember: true,
         });
-        toast.success(`Welcome, ${user.name}!`);
+        toast.success(`Welcome back, ${user.name}!`);
         navigate(`/${user.role}/dashboard`, { replace: true });
       } else {
-        // Brand new user without pre-selected role: ask them for role!
+        // User does not exist in database: show role selection
         setPendingGoogleUser(googleUser);
         setShowRoleModal(true);
       }
@@ -95,16 +88,16 @@ export default function GoogleSignInButton({ role, text = "Continue with Google"
         avatar: demoGoogleUser.name.slice(0, 2).toUpperCase(),
         uid: `goog_${Date.now()}`,
       };
-      const existingAccount = checkExistingUser(gUser.email);
+      const userCheck = await checkUserExists(gUser.email);
 
-      if (existingAccount || role) {
+      if (userCheck.exists || role) {
         const user = await loginWithGoogle({
           googleUser: gUser,
-          role: existingAccount?.profile?.role || role || "student",
+          role: userCheck.role || role || "student",
           remember: true,
         });
         setShowConfigModal(false);
-        toast.success(`Welcome, ${user.name}!`);
+        toast.success(`Welcome back, ${user.name}!`);
         navigate(`/${user.role}/dashboard`, { replace: true });
       } else {
         setShowConfigModal(false);

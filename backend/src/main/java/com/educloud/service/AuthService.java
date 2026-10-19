@@ -17,7 +17,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -237,6 +240,22 @@ public class AuthService {
 
         resetToken.setUsed(true);
         passwordResetTokenRepository.save(resetToken);
+    }
+
+    public Map<String, Object> checkUser(String email) {
+        String cleanEmail = email != null ? email.trim().toLowerCase(Locale.ROOT) : "";
+        Optional<User> userOpt = userRepository.findByEmailIgnoreCase(cleanEmail);
+        Map<String, Object> res = new HashMap<>();
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            res.put("exists", true);
+            res.put("role", user.getRole().name().toLowerCase(Locale.ROOT));
+            res.put("name", user.getName());
+        } else {
+            res.put("exists", false);
+            res.put("role", null);
+        }
+        return res;
     }
 
     private Long resolveProfileId(User user) {

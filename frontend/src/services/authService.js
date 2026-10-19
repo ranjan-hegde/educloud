@@ -34,6 +34,51 @@ function findAccount(email) {
 }
 
 /**
+ * Checks if a user already exists in either the backend database,
+ * local mock demo accounts, or local registered cache.
+ */
+export async function checkUserExists(email) {
+  if (!email || !/\S+@\S+\.\S+/.test(email)) return { exists: false, role: null };
+  const cleanEmail = email.trim().toLowerCase();
+
+  // 1. Check local demo accounts
+  if (DEMO_ACCOUNTS[cleanEmail]) {
+    return {
+      exists: true,
+      role: DEMO_ACCOUNTS[cleanEmail].profile.role,
+      name: DEMO_ACCOUNTS[cleanEmail].profile.name,
+    };
+  }
+
+  // 2. Check local registered users cache
+  const localRegistered = loadRegisteredUsers();
+  if (localRegistered[cleanEmail]) {
+    return {
+      exists: true,
+      role: localRegistered[cleanEmail].profile.role,
+      name: localRegistered[cleanEmail].profile.name,
+    };
+  }
+
+  // 3. Check backend database
+  try {
+    const res = await api(`/api/auth/check?email=${encodeURIComponent(cleanEmail)}`);
+    const data = res?.data || res;
+    if (data?.exists) {
+      return {
+        exists: true,
+        role: (data.role || "student").toLowerCase(),
+        name: data.name,
+      };
+    }
+  } catch {
+    // Backend offline / sleeping: fallback
+  }
+
+  return { exists: false, role: null };
+}
+
+/**
  * Log in with Email & Password.
  * Attempts real backend POST /api/auth/login first; falls back gracefully if backend is waking up.
  */
