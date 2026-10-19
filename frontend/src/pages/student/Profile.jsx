@@ -47,7 +47,29 @@ export default function StudentProfile() {
     toast.success("Profile updated successfully.");
   }
 
-  const avatarText = form.avatar || form.name?.slice(0, 2)?.toUpperCase() || "ST";
+  const isImageAvatar =
+    form.avatar &&
+    typeof form.avatar === "string" &&
+    (form.avatar.startsWith("http://") ||
+      form.avatar.startsWith("https://") ||
+      form.avatar.startsWith("data:"));
+
+  const avatarInitials = (form.name || "Student")
+    .trim()
+    .split(/\s+/)
+    .map((p) => p[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  const formattedRollNo = (() => {
+    const raw = form.rollNo || form.id;
+    if (!raw) return "STU2601";
+    const str = String(raw);
+    if (/^\d+$/.test(str)) return `STU${2600 + parseInt(str, 10)}`;
+    if (str.startsWith("GOOG")) return `STU${str.replace("GOOG", "")}`;
+    return str;
+  })();
 
   return (
     <div>
@@ -68,12 +90,23 @@ export default function StudentProfile() {
 
       <div className="card p-6">
         <div className="flex items-center gap-4 mb-6 pb-6 border-b border-surface-border">
-          <div className="h-20 w-20 rounded-2xl bg-navy-800 text-white flex items-center justify-center text-2xl font-display font-semibold">
-            {avatarText}
-          </div>
+          {isImageAvatar ? (
+            <img
+              src={form.avatar}
+              alt={form.name}
+              className="h-20 w-20 rounded-2xl object-cover border border-surface-border shadow-sm"
+              onError={(e) => {
+                e.target.style.display = "none";
+              }}
+            />
+          ) : (
+            <div className="h-20 w-20 rounded-2xl bg-navy-800 text-white flex items-center justify-center text-2xl font-display font-semibold">
+              {avatarInitials}
+            </div>
+          )}
           <div>
             <p className="text-lg font-semibold text-navy-900">{form.name}</p>
-            <p className="text-sm text-navy-400">{form.rollNo || form.id || "Student"} · {form.course || "BCA"}</p>
+            <p className="text-sm text-navy-400">{formattedRollNo} · {form.course || "BCA"}</p>
           </div>
         </div>
 
@@ -88,7 +121,9 @@ export default function StudentProfile() {
                   onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
                 />
               ) : (
-                <p className="text-sm font-semibold text-navy-800 mt-1">{form[key] || "—"}</p>
+                <p className="text-sm font-semibold text-navy-800 mt-1">
+                  {key === "rollNo" ? formattedRollNo : form[key] || "—"}
+                </p>
               )}
             </div>
           ))}

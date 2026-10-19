@@ -29,7 +29,21 @@ export default function FacultyProfile() {
     toast.success("Profile updated successfully.");
   }
 
-  const avatar = form.avatar || form.name?.slice(0, 2)?.toUpperCase() || "FC";
+  const isImageAvatar =
+    form.avatar &&
+    typeof form.avatar === "string" &&
+    (form.avatar.startsWith("http://") ||
+      form.avatar.startsWith("https://") ||
+      form.avatar.startsWith("data:"));
+
+  const avatarInitials = (form.name || "Faculty")
+    .trim()
+    .split(/\s+/)
+    .map((p) => p[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
   const subjectsList = form.subjects || currentFaculty.subjects || [];
 
   return (
@@ -48,9 +62,20 @@ export default function FacultyProfile() {
       />
       <div className="card p-6">
         <div className="flex items-center gap-4 mb-6 pb-6 border-b border-surface-border">
-          <div className="h-20 w-20 rounded-2xl bg-navy-800 text-white flex items-center justify-center text-2xl font-display font-semibold">
-            {avatar}
-          </div>
+          {isImageAvatar ? (
+            <img
+              src={form.avatar}
+              alt={form.name}
+              className="h-20 w-20 rounded-2xl object-cover border border-surface-border shadow-sm"
+              onError={(e) => {
+                e.target.style.display = "none";
+              }}
+            />
+          ) : (
+            <div className="h-20 w-20 rounded-2xl bg-navy-800 text-white flex items-center justify-center text-2xl font-display font-semibold">
+              {avatarInitials}
+            </div>
+          )}
           <div>
             <p className="text-lg font-semibold text-navy-900">{form.name}</p>
             <p className="text-sm text-navy-400">{form.id || "Faculty"} · {form.designation || "Faculty"}</p>
