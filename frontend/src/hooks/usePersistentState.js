@@ -1,55 +1,90 @@
 // usePersistentState.js
-// Drop-in replacement for useState(initialData) that automatically reads
-// from and writes through to the shared storageService (localStorage-backed).
-// Usage is identical to useState: const [items, setItems] = usePersistentState("students");
-//
-// It also stays in sync when the SAME key is changed elsewhere:
-//   - by another mounted component in this tab (custom "educloud-storage-update" event)
-//   - by another browser tab entirely (native "storage" event)
-// This matters for cross-role flows like Student submitting feedback while
-// a Faculty page reading the same key is already open.
+// Robust, loop-safe hook for reactive synchronized state backed by storageService.
+// Uses deep equality checks to strictly prevent infinite setState re-render loops.
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import * as storageService from "../services/storageService";
+
+function areValuesEqual(a, b) {
+  if (a === b) return true;
+  if (a === null || b === null || a === undefined || b === undefined) return a === b;
+  try {
+    return JSON.stringify(a) === JSON.stringify(b);
+  } catch {
+    return false;
+  }
+}
 
 export function usePersistentState(key) {
   const [value, setValue] = useState(() => storageService.getData(key));
-  const isFirstRun = useRef(true);
-  const lastWritten = useRef(value);
+  const lastKnownJson = useRef(() => {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return "";
+    }
+  });
+  const isFirstMount = useRef(true);
 
-  // Write through to storage whenever THIS hook's own state changes.
+  // Write through to storage ONLY when the value actually changed semantically
   useEffect(() => {
-    if (isFirstRun.current) {
-      isFirstRun.current = false;
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
       return;
     }
-    lastWritten.current = value;
+
+    let currentJson = "";
+    try {
+      currentJson = JSON.stringify(value);
+    } catch {
+      currentJson = "";
+    }
+
+    if (currentJson === lastKnownJson.current) {
+      return; // No change, skip write to prevent loop
+    }
+
+    lastKnownJson.current = currentJson;
     storageService.setData(key, value);
   }, [key, value]);
 
-  // React to changes made by other components/tabs to this same key.
+  // Sync when another component or tab updates this key
+  const syncFromStorage = useCallback(() => {
+    const fresh = storageService.getData(key);
+    let freshJson = "";
+    try {
+      freshJson = JSON.stringify(fresh);
+    } catch {
+      freshJson = "";
+    }
+
+    if (freshJson !== lastKnownJson.current) {
+      lastKnownJson.current = freshJson;
+      setValue(fresh);
+    }
+  }, [key]);
+
   useEffect(() => {
-    function syncFromStorage() {
-      const fresh = storageService.getData(key);
-      if (fresh !== lastWritten.current) {
-        lastWritten.current = fresh;
-        setValue(fresh);
+    function onCustomUpdate(e) {
+      if (e.detail?.key === key) {
+        syncFromStorage();
       }
     }
-    function onCustomUpdate(e) {
-      if (e.detail?.key === key) syncFromStorage();
-    }
+
     function onNativeStorageEvent(e) {
-      // Native "storage" only fires in OTHER tabs, with the raw namespace key.
-      if (!e.key || e.key === "educloud_data") syncFromStorage();
+      if (!e.key || e.key === "educloud_data") {
+        syncFromStorage();
+      }
     }
+
     window.addEventListener("educloud-storage-update", onCustomUpdate);
     window.addEventListener("storage", onNativeStorageEvent);
+
     return () => {
       window.removeEventListener("educloud-storage-update", onCustomUpdate);
       window.removeEventListener("storage", onNativeStorageEvent);
     };
-  }, [key]);
+  }, [key, syncFromStorage]);
 
   return [value, setValue];
 }

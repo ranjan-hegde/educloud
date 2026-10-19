@@ -55,10 +55,10 @@ export default function Login() {
   }
 
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in text-slate-800 dark:text-slate-100">
       <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-display font-bold text-navy-950">Welcome back</h1>
-        <p className="text-sm text-slate-500 mt-1">Sign in with your email or Google account to access your portal.</p>
+        <h1 className="text-2xl sm:text-3xl font-display font-bold text-slate-900 dark:text-white">Welcome back</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Sign in with your email or Google account to access your portal.</p>
       </div>
 
       {/* Google Sign-in */}
@@ -68,10 +68,12 @@ export default function Login() {
 
       <div className="relative my-5">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-slate-200"></div>
+          <div className="w-full border-t border-black/10 dark:border-white/10"></div>
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-white px-3 text-slate-400 font-medium tracking-wider">or sign in with email</span>
+          <span className="bg-white/95 dark:bg-slate-900/95 px-3 text-slate-400 dark:text-slate-500 font-medium tracking-wider">
+            or sign in with email
+          </span>
         </div>
       </div>
 
@@ -79,7 +81,7 @@ export default function Login() {
         <div>
           <label className="label">Email address</label>
           <div className="relative">
-            <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
             <input
               type="email"
               value={email}
@@ -95,7 +97,7 @@ export default function Login() {
         <div>
           <label className="label">Password</label>
           <div className="relative">
-            <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
             <input
               type={showPassword ? "text" : "password"}
               value={password}
@@ -107,7 +109,7 @@ export default function Login() {
             <button
               type="button"
               onClick={() => setShowPassword((s) => !s)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-navy-700 transition-colors"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
             >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
@@ -116,16 +118,16 @@ export default function Login() {
         </div>
 
         <div className="flex items-center justify-between text-xs sm:text-sm pt-1">
-          <label className="flex items-center gap-2 text-slate-600 cursor-pointer select-none">
+          <label className="flex items-center gap-2 text-slate-600 dark:text-slate-400 cursor-pointer select-none">
             <input
               type="checkbox"
               checked={remember}
               onChange={(e) => setRemember(e.target.checked)}
-              className="rounded border-slate-300 text-navy-800 focus:ring-accent-teal"
+              className="rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
             />
             <span>Stay logged in</span>
           </label>
-          <Link to="/forgot-password" className="text-navy-700 font-semibold hover:text-accent-teal transition-colors">
+          <Link to="/forgot-password" className="text-blue-600 dark:text-blue-400 font-medium hover:underline transition-colors">
             Forgot password?
           </Link>
         </div>
@@ -133,7 +135,7 @@ export default function Login() {
         <button
           type="submit"
           disabled={loading}
-          className="btn-primary w-full py-3 mt-2 font-semibold shadow-md flex items-center justify-center gap-2 text-base"
+          className="btn-primary w-full py-2.5 mt-2 font-medium shadow-md flex items-center justify-center gap-2 text-sm"
         >
           {loading ? (
             <>
@@ -148,36 +150,36 @@ export default function Login() {
       </form>
 
       {/* Quick Demo Access Bar */}
-      <div className="mt-6 rounded-2xl bg-slate-50/90 border border-slate-200/80 p-3.5">
-        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Quick Demo Access</p>
+      <div className="mt-6 rounded-2xl bg-black/[0.03] dark:bg-white/[0.05] border border-black/5 dark:border-white/10 p-3.5">
+        <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Quick Demo Access</p>
         <div className="grid grid-cols-3 gap-2">
           <button
             type="button"
             onClick={() => fillDemo("student")}
-            className="py-1.5 px-2 rounded-xl text-xs font-semibold bg-white border border-slate-200 hover:border-teal-400 hover:text-teal-700 transition-all shadow-2xs text-center"
+            className="py-1.5 px-2 rounded-xl text-xs font-semibold bg-white/80 dark:bg-slate-800/80 border border-black/5 dark:border-white/10 hover:border-blue-500 text-slate-800 dark:text-slate-100 transition-all shadow-2xs text-center"
           >
             Student
           </button>
           <button
             type="button"
             onClick={() => fillDemo("faculty")}
-            className="py-1.5 px-2 rounded-xl text-xs font-semibold bg-white border border-slate-200 hover:border-teal-400 hover:text-teal-700 transition-all shadow-2xs text-center"
+            className="py-1.5 px-2 rounded-xl text-xs font-semibold bg-white/80 dark:bg-slate-800/80 border border-black/5 dark:border-white/10 hover:border-blue-500 text-slate-800 dark:text-slate-100 transition-all shadow-2xs text-center"
           >
             Faculty
           </button>
           <button
             type="button"
             onClick={() => fillDemo("admin")}
-            className="py-1.5 px-2 rounded-xl text-xs font-semibold bg-white border border-slate-200 hover:border-teal-400 hover:text-teal-700 transition-all shadow-2xs text-center"
+            className="py-1.5 px-2 rounded-xl text-xs font-semibold bg-white/80 dark:bg-slate-800/80 border border-black/5 dark:border-white/10 hover:border-blue-500 text-slate-800 dark:text-slate-100 transition-all shadow-2xs text-center"
           >
             Admin
           </button>
         </div>
       </div>
 
-      <p className="text-sm text-slate-500 text-center mt-6">
+      <p className="text-sm text-slate-500 dark:text-slate-400 text-center mt-6">
         Don't have an account?{" "}
-        <Link to="/register" className="text-navy-900 font-bold hover:text-accent-teal hover:underline transition-colors">
+        <Link to="/register" className="text-blue-600 dark:text-blue-400 font-semibold hover:underline transition-colors">
           Create Account
         </Link>
       </p>
