@@ -144,86 +144,35 @@ export default function StudentQRAttendance() {
   ];
 
   return (
-    <div className="liquid-glass-studio rounded-3xl overflow-hidden animate-fade-in text-slate-800 dark:text-slate-100 mb-8">
-      {/* 1. Header */}
-      <div className="p-6 sm:p-7 soft-line-b">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-teal-600 dark:text-teal-400 bg-teal-500/10 px-2.5 py-0.5 rounded-full border border-teal-500/20">
-              Live Check-In
-            </span>
-            <h1 className="text-2xl sm:text-3xl font-display font-bold text-slate-900 dark:text-white tracking-tight mt-1.5">
-              QR Attendance Scanner
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Scan your classroom's dynamic QR code with location verification
-            </p>
-          </div>
+    <div>
+      <PageHeader title="QR Attendance" subtitle="Scan your class QR code to mark attendance instantly" />
 
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/60 dark:bg-slate-800/60 text-teal-600 dark:text-teal-400 border border-white/60 dark:border-white/10 shadow-xs">
-              Overall: {attendanceSummary?.overall ?? 0}%
-            </span>
-          </div>
-        </div>
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <DashboardCard icon={CalendarDays} label="Today's Classes" value={todaysRows.length} tone="navy" />
+        <DashboardCard icon={CheckCircle2} label="Present" value={presentCount} tone="teal" />
+        <DashboardCard icon={XCircle} label="Absent" value={absentCount} tone="coral" />
       </div>
 
-      {/* 2. Key Metrics Row */}
-      <div className="grid grid-cols-3 soft-line-b divide-x divide-black/5 dark:divide-white/10">
-        <div className="p-4 sm:p-5 flex items-center justify-between group hover:bg-black/[0.015] dark:hover:bg-white/[0.02] transition-colors">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Today's Classes</p>
-            <p className="mt-1 text-2xl font-display font-bold text-slate-900 dark:text-white tracking-tight">{todaysRows.length}</p>
-          </div>
-          <div className="h-8 w-8 rounded-xl flex items-center justify-center border border-white/40 dark:border-white/10 text-blue-500 bg-blue-500/10">
-            <CalendarDays size={16} />
-          </div>
-        </div>
-
-        <div className="p-4 sm:p-5 flex items-center justify-between group hover:bg-black/[0.015] dark:hover:bg-white/[0.02] transition-colors">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Present</p>
-            <p className="mt-1 text-2xl font-display font-bold text-emerald-600 dark:text-emerald-400 tracking-tight">{presentCount}</p>
-          </div>
-          <div className="h-8 w-8 rounded-xl flex items-center justify-center border border-white/40 dark:border-white/10 text-emerald-500 bg-emerald-500/10">
-            <CheckCircle2 size={16} />
-          </div>
-        </div>
-
-        <div className="p-4 sm:p-5 flex items-center justify-between group hover:bg-black/[0.015] dark:hover:bg-white/[0.02] transition-colors">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Absent</p>
-            <p className="mt-1 text-2xl font-display font-bold text-rose-500 dark:text-rose-400 tracking-tight">{absentCount}</p>
-          </div>
-          <div className="h-8 w-8 rounded-xl flex items-center justify-center border border-white/40 dark:border-white/10 text-rose-500 bg-rose-500/10">
-            <XCircle size={16} />
-          </div>
-        </div>
-      </div>
-
-      {/* 3. Today's Classes Status Strip */}
-      <div className="p-6 soft-line-b">
+      <div className="card p-5 mb-6">
         <div className="flex items-center justify-between mb-4">
-          <p className="font-semibold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-            <ListChecks size={16} className="text-teal-500" /> Today's Scheduled Lectures
-          </p>
-          <span className="text-xs text-slate-400 dark:text-slate-500">{attendancePct}% attended today</span>
+          <p className="font-semibold text-navy-900 flex items-center gap-2"><ListChecks size={16} /> Today's Classes</p>
+          <span className="text-xs text-navy-400">{attendancePct}% attended today</span>
         </div>
         {todaysRows.length === 0 ? (
-          <p className="text-xs text-slate-400 dark:text-slate-500 text-center py-6">No classes scheduled for your class today.</p>
+          <p className="text-sm text-navy-400 text-center py-6">No classes scheduled for your class today.</p>
         ) : (
           <DataTable
             columns={["Subject", "Time", "Faculty", "Location", "Status"]}
             data={todaysRows}
             renderRow={(r) => (
               <>
-                <td className="px-3 py-3 font-medium text-slate-800 dark:text-slate-200">{r.session.subject}</td>
-                <td className="px-3 py-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">{r.session.startTime} – {r.session.endTime}</td>
-                <td className="px-3 py-3 text-slate-500 dark:text-slate-400">{r.session.faculty}</td>
-                <td className="px-3 py-3 text-slate-500 dark:text-slate-400">{r.session.location}</td>
+                <td className="px-3 py-3 font-medium text-navy-800">{r.session.subject}</td>
+                <td className="px-3 py-3 text-navy-500 whitespace-nowrap">{r.session.startTime} – {r.session.endTime}</td>
+                <td className="px-3 py-3 text-navy-500">{r.session.faculty}</td>
+                <td className="px-3 py-3 text-navy-500">{r.session.location}</td>
                 <td className="px-3 py-3">
                   <StatusBadge status={r.status === "PRESENT" ? "Present" : r.status === "ABSENT" ? "Absent" : r.status} />
-                  {r.status === "PRESENT" && r.time && <span className="text-xs text-slate-400 ml-2">at {r.time}</span>}
+                  {r.status === "PRESENT" && r.time && <span className="text-xs text-navy-400 ml-2">at {r.time}</span>}
                 </td>
               </>
             )}
@@ -231,78 +180,67 @@ export default function StudentQRAttendance() {
         )}
       </div>
 
-      {/* 4. Scanner & Active Session Panel */}
       {!selected ? (
-        <div className="p-10 text-center text-xs text-slate-400 dark:text-slate-500 soft-line-b">
-          No attendance sessions are scheduled for your class right now.
-        </div>
+        <div className="card p-10 text-center text-sm text-navy-400">No attendance sessions are scheduled for your class right now.</div>
       ) : (
-        <div className="grid lg:grid-cols-3 soft-line-b">
-          {/* Left Session Selector */}
-          <div className="p-6 lg:soft-line-r space-y-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Available Class Sessions</p>
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-1 space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-navy-400 px-1">Your Sessions</p>
             {mySessions.map((s) => (
               <button
                 key={s.id}
                 onClick={() => { setSelectedId(s.id); setStatus("idle"); setResult(null); }}
-                className={`w-full text-left p-4 rounded-2xl transition-all macos-bouncy border ${
-                  selectedId === s.id
-                    ? "bg-white/80 dark:bg-slate-800/80 border-teal-500/50 shadow-sm"
-                    : "bg-white/30 dark:bg-slate-800/30 border-white/40 dark:border-white/10 hover:bg-white/60 dark:hover:bg-slate-800/60"
-                }`}
+                className={`w-full text-left card p-4 transition-all ${selectedId === s.id ? "ring-2 ring-navy-700" : "hover:shadow-pop"}`}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <p className="font-semibold text-slate-900 dark:text-white text-sm">{s.subject}</p>
+                  <p className="font-semibold text-navy-900 text-sm">{s.subject}</p>
                   <StatusBadge status={s.status} />
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 space-y-1">
-                  <p className="flex items-center gap-1.5"><User size={12} className="text-teal-500" /> {s.faculty}</p>
-                  <p className="flex items-center gap-1.5"><Clock size={12} className="text-teal-500" /> {s.startTime} – {s.endTime}</p>
-                  <p className="flex items-center gap-1.5"><MapPin size={12} className="text-teal-500" /> {s.location}</p>
+                <div className="text-xs text-navy-400 space-y-1">
+                  <p className="flex items-center gap-1.5"><User size={12} /> {s.faculty}</p>
+                  <p className="flex items-center gap-1.5"><Clock size={12} /> {s.startTime} – {s.endTime}</p>
+                  <p className="flex items-center gap-1.5"><MapPin size={12} /> {s.location}</p>
                 </div>
               </button>
             ))}
           </div>
 
-          {/* Right Scanner & Verification */}
-          <div className="lg:col-span-2 p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-5 pb-4 soft-line-b">
+          <div className="lg:col-span-2 card p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-5 pb-5 border-b border-surface-border">
               <div>
-                <p className="font-semibold text-slate-900 dark:text-white text-sm">{selected.subject}</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{selected.room} · {selected.startTime} – {selected.endTime}</p>
+                <p className="font-semibold text-navy-900">{selected.subject}</p>
+                <p className="text-xs text-navy-400 mt-0.5">{selected.room} · {selected.startTime} – {selected.endTime}</p>
               </div>
               <StatusBadge status={selected.status} />
             </div>
 
             {alreadyMarkedSelected ? (
-              <div className="flex flex-col items-center text-center py-12">
-                <div className="h-14 w-14 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-3 border border-emerald-500/20 shadow-xs">
-                  <CheckCircle2 size={32} />
-                </div>
-                <p className="font-bold text-slate-900 dark:text-white text-base">Attendance already marked</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">You have already verified and checked in for this class.</p>
+              <div className="flex flex-col items-center text-center py-10">
+                <CheckCircle2 size={40} className="text-emerald-500 mb-3" />
+                <p className="font-semibold text-navy-900">Attendance already marked</p>
+                <p className="text-sm text-navy-400 mt-1">You've already checked in for this class.</p>
               </div>
             ) : (
               <div className="grid sm:grid-cols-2 gap-6">
                 <QRScanner onScan={handleScan} disabled={status === "checking"} />
-                <div className="space-y-4">
+                <div className="space-y-5">
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Verification Status</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-navy-400 mb-2.5">Verification</p>
                     <AttendanceVerification status={status} checks={result?.checks} />
                   </div>
                   {status === "done" && (
-                    <div className={`rounded-2xl p-4 text-xs ${result.success ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20" : "bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20"}`}>
-                      <div className="flex items-center gap-2 font-semibold text-sm">
+                    <div className={`rounded-xl p-3.5 text-sm ${result.success ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
+                      <div className="flex items-center gap-2 font-medium">
                         {result.success ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
                         {result.message}
                       </div>
                       {result.success && result.session && (
-                        <div className="mt-2.5 pt-2.5 border-t border-emerald-500/20 space-y-1">
+                        <div className="mt-2.5 pt-2.5 border-t border-emerald-200/60 text-xs space-y-1 text-emerald-800">
                           <p>Subject: {result.session.subject}</p>
                           <p>Faculty: {result.session.faculty}</p>
                           <p>Date: {result.session.date}</p>
                           <p>Location: {result.session.location}</p>
-                          <p className="font-bold text-emerald-600 dark:text-emerald-400">Status: PRESENT</p>
+                          <p>Status: PRESENT</p>
                         </div>
                       )}
                     </div>
@@ -322,21 +260,20 @@ export default function StudentQRAttendance() {
         </div>
       )}
 
-      {/* 5. Attendance History */}
-      <div className="p-6">
+      <div className="card p-5 mt-6">
         <div className="flex items-center justify-between mb-4">
-          <p className="font-semibold text-sm text-slate-900 dark:text-white">Attendance History</p>
-          <span className="text-xs text-slate-400 dark:text-slate-500">Overall: {attendanceSummary?.overall ?? 0}%</span>
+          <p className="font-semibold text-navy-900">Attendance History</p>
+          <span className="text-xs text-navy-400">Overall: {attendanceSummary.overall}%</span>
         </div>
         <DataTable
           columns={["Subject", "Date", "Time", "Location", "Status"]}
           data={history}
           renderRow={(r) => (
             <>
-              <td className="px-3 py-3 font-medium text-slate-800 dark:text-slate-200">{r.subject}</td>
-              <td className="px-3 py-3 text-slate-500 dark:text-slate-400">{r.date}</td>
-              <td className="px-3 py-3 text-slate-500 dark:text-slate-400">{r.time}</td>
-              <td className="px-3 py-3 text-slate-500 dark:text-slate-400">{r.location}</td>
+              <td className="px-3 py-3 font-medium text-navy-800">{r.subject}</td>
+              <td className="px-3 py-3 text-navy-500">{r.date}</td>
+              <td className="px-3 py-3 text-navy-500">{r.time}</td>
+              <td className="px-3 py-3 text-navy-500">{r.location}</td>
               <td className="px-3 py-3"><StatusBadge status={r.status} /></td>
             </>
           )}

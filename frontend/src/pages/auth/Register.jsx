@@ -77,10 +77,10 @@ export default function Register() {
   }
 
   return (
-    <div className="animate-fade-in text-slate-800 dark:text-slate-100">
+    <div className="animate-fade-in">
       <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-display font-bold text-slate-900 dark:text-white">Create account</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Join EduCloud with your university role and get started.</p>
+        <h1 className="text-2xl sm:text-3xl font-display font-bold text-navy-950">Create account</h1>
+        <p className="text-sm text-slate-500 mt-1">Join EduCloud with your university role and get started.</p>
       </div>
 
       {/* Google Sign-in on Register */}
@@ -90,12 +90,10 @@ export default function Register() {
 
       <div className="relative my-5">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-black/10 dark:border-white/10"></div>
+          <div className="w-full border-t border-slate-200"></div>
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-white/95 dark:bg-slate-900/95 px-3 text-slate-400 dark:text-slate-500 font-medium tracking-wider">
-            or register with details
-          </span>
+          <span className="bg-white px-3 text-slate-400 font-medium tracking-wider">or register with details</span>
         </div>
       </div>
 
@@ -111,8 +109,8 @@ export default function Register() {
                 onClick={() => update("role", role)}
                 className={`py-2 px-3 rounded-xl text-xs sm:text-sm font-semibold border transition-all capitalize ${
                   form.role === role
-                    ? "bg-blue-600 text-white border-blue-600 shadow-sm"
-                    : "bg-white/80 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                    ? "bg-navy-900 text-white border-navy-900 shadow-sm"
+                    : "bg-white/80 border-slate-200 text-slate-600 hover:bg-slate-50"
                 }`}
               >
                 {role}
@@ -182,30 +180,30 @@ export default function Register() {
 
         {/* Academic Details for Students */}
         {form.role === "student" && (
-          <div className="p-3.5 rounded-2xl bg-teal-500/10 border border-teal-500/20 space-y-3">
-            <p className="text-xs font-semibold text-teal-700 dark:text-teal-300 uppercase tracking-wider">Academic Program</p>
+          <div className="p-3.5 rounded-2xl bg-teal-50/50 border border-teal-100/80 space-y-3">
+            <p className="text-xs font-semibold text-teal-900 uppercase tracking-wider">Academic Program</p>
             <div className="grid sm:grid-cols-2 gap-3">
               <div>
-                <label className="label !text-teal-800 dark:!text-teal-200">Course</label>
+                <label className="label !text-teal-900">Course</label>
                 <select
-                  className="input"
+                  className="input !bg-white"
                   value={form.course}
                   onChange={(e) => update("course", e.target.value)}
                 >
                   {courses.map((c) => (
-                    <option key={c} value={c} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">{c}</option>
+                    <option key={c} value={c}>{c}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="label !text-teal-800 dark:!text-teal-200">Current Semester</label>
+                <label className="label !text-teal-900">Current Semester</label>
                 <select
-                  className="input"
+                  className="input !bg-white"
                   value={form.semester}
                   onChange={(e) => update("semester", e.target.value)}
                 >
                   {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
-                    <option key={s} value={s} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">{s}st/nd/th Semester</option>
+                    <option key={s} value={s}>{s}st/nd/th Semester</option>
                   ))}
                 </select>
               </div>
@@ -216,7 +214,7 @@ export default function Register() {
         <button
           type="submit"
           disabled={loading}
-          className="btn-primary w-full py-2.5 mt-2 font-medium shadow-md flex items-center justify-center gap-2 text-sm"
+          className="btn-primary w-full py-3 mt-2 font-semibold shadow-md flex items-center justify-center gap-2 text-base"
         >
           {loading ? (
             <>
@@ -230,9 +228,9 @@ export default function Register() {
         </button>
       </form>
 
-      <p className="text-sm text-slate-500 dark:text-slate-400 text-center mt-6">
+      <p className="text-sm text-slate-500 text-center mt-6">
         Already have an account?{" "}
-        <Link to="/login" className="text-blue-600 dark:text-blue-400 font-semibold hover:underline transition-colors">
+        <Link to="/login" className="text-navy-900 font-bold hover:text-accent-teal hover:underline transition-colors">
           Sign In
         </Link>
       </p>

@@ -1,30 +1,22 @@
 // usePersistentState.js
-// Robust, loop-safe hook for reactive synchronized state backed by storageService.
-// Uses deep equality checks to strictly prevent infinite setState re-render loops.
+// Loop-safe hook for reactive synchronized state backed by storageService.
+// Uses serialized equality checks to strictly prevent infinite setState re-render loops.
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import * as storageService from "../services/storageService";
 
-function areValuesEqual(a, b) {
-  if (a === b) return true;
-  if (a === null || b === null || a === undefined || b === undefined) return a === b;
-  try {
-    return JSON.stringify(a) === JSON.stringify(b);
-  } catch {
-    return false;
-  }
-}
-
 export function usePersistentState(key) {
   const [value, setValue] = useState(() => storageService.getData(key));
-  const lastKnownJson = useRef(() => {
-    try {
-      return JSON.stringify(value);
-    } catch {
-      return "";
-    }
-  });
   const isFirstMount = useRef(true);
+  const lastKnownJson = useRef("");
+
+  useEffect(() => {
+    try {
+      lastKnownJson.current = JSON.stringify(value);
+    } catch {
+      lastKnownJson.current = "";
+    }
+  }, []);
 
   // Write through to storage ONLY when the value actually changed semantically
   useEffect(() => {
@@ -88,3 +80,4 @@ export function usePersistentState(key) {
 
   return [value, setValue];
 }
+

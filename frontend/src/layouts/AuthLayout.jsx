@@ -13,14 +13,14 @@ export default function AuthLayout() {
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-slate-950 relative overflow-hidden font-sans">
       {/* Ambient background glows */}
-      <div className="pointer-events-none absolute -top-40 -left-40 w-[600px] h-[600px] bg-blue-500/20 rounded-full blur-[140px]" />
-      <div className="pointer-events-none absolute -bottom-40 right-10 w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[140px]" />
-      <div className="pointer-events-none absolute top-1/2 left-1/3 w-[400px] h-[400px] bg-teal-500/15 rounded-full blur-[120px]" />
+      <div className="pointer-events-none absolute -top-40 -left-40 w-[600px] h-[600px] bg-accent-teal/15 rounded-full blur-[140px]" />
+      <div className="pointer-events-none absolute -bottom-40 right-10 w-[500px] h-[500px] bg-indigo-600/15 rounded-full blur-[140px]" />
+      <div className="pointer-events-none absolute top-1/2 left-1/3 w-[400px] h-[400px] bg-amber-500/10 rounded-full blur-[120px]" />
 
       {/* Brand Hero Panel */}
       <div className="hidden lg:flex flex-col justify-between p-12 lg:p-16 relative z-10 text-white">
         <Link to="/" className="flex items-center gap-2.5">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-500 to-teal-400 flex items-center justify-center font-display font-bold text-slate-950 text-xl shadow-lg border border-white/40">
+          <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-accent-teal to-teal-300 flex items-center justify-center font-display font-bold text-navy-950 text-xl shadow-glow-teal">
             E
           </div>
           <div>
@@ -42,15 +42,15 @@ export default function AuthLayout() {
 
           <div className="mt-10 space-y-4">
             <div className="flex items-center gap-3.5 p-3 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 text-sm text-slate-200">
-              <div className="p-2 rounded-lg bg-teal-500/20 text-teal-300"><QrCode size={18} /></div>
+              <div className="p-2 rounded-lg bg-accent-teal/20 text-accent-teal"><QrCode size={18} /></div>
               <span>Anti-spoofing QR & geo-fenced classroom attendance</span>
             </div>
             <div className="flex items-center gap-3.5 p-3 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 text-sm text-slate-200">
-              <div className="p-2 rounded-lg bg-blue-500/20 text-blue-300"><Cloud size={18} /></div>
+              <div className="p-2 rounded-lg bg-indigo-500/20 text-indigo-300"><Cloud size={18} /></div>
               <span>Isolated database partitions for each student & faculty</span>
             </div>
             <div className="flex items-center gap-3.5 p-3 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 text-sm text-slate-200">
-              <div className="p-2 rounded-lg bg-purple-500/20 text-purple-300"><ShieldCheck size={18} /></div>
+              <div className="p-2 rounded-lg bg-teal-500/20 text-teal-300"><ShieldCheck size={18} /></div>
               <span>Persistent biometric & token authentication</span>
             </div>
           </div>
@@ -59,9 +59,9 @@ export default function AuthLayout() {
         <p className="text-xs text-slate-500">© 2026 EduCloud Inc. Built for higher education institutions.</p>
       </div>
 
-      {/* Auth Form Container with Liquid Glass Panel */}
+      {/* Auth Form Container with Frosted Glass Panel */}
       <div className="flex items-center justify-center p-6 sm:p-10 relative z-10">
-        <div className="w-full max-w-md bg-white/85 dark:bg-slate-900/85 backdrop-blur-2xl rounded-3xl p-8 sm:p-10 shadow-2xl border border-white/70 dark:border-white/10 text-slate-900 dark:text-white">
+        <div className="w-full max-w-md bg-white/95 backdrop-blur-2xl rounded-3xl p-8 sm:p-10 shadow-glass-lg border border-white/60">
           <Outlet />
         </div>
       </div>

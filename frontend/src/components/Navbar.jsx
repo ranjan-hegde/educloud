@@ -1,14 +1,12 @@
 import { useState } from "react";
-import { Menu, Bell, LogOut, ChevronDown, User as UserIcon, Settings as SettingsIcon, Sun, Moon } from "lucide-react";
+import { Menu, Bell, LogOut, ChevronDown, User as UserIcon, Settings as SettingsIcon } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { useTheme } from "../context/ThemeContext";
 import { useNavigate } from "react-router-dom";
 import NotificationPanel from "./NotificationPanel";
 import { usePersistentState } from "../hooks/usePersistentState";
 
 export default function Navbar({ onMenuClick, basePath, title }) {
   const { user, logout } = useAuth();
-  const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [notifOpen, setNotifOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -16,11 +14,12 @@ export default function Navbar({ onMenuClick, basePath, title }) {
 
   const studentClass = `${user?.course || "BCA"} ${user?.semester || "1st Semester"}`;
 
-  const safeNotifications = Array.isArray(allNotifications) ? allNotifications : [];
+  // Same scoping rule the Notifications pages already use: students only
+  // see class-scoped items (or unscoped general ones); other roles see all.
   const notificationsList =
     user?.role === "student"
-      ? safeNotifications.filter((n) => !n.classId || n.classId === studentClass)
-      : safeNotifications;
+      ? allNotifications.filter((n) => !n.classId || n.classId === studentClass)
+      : allNotifications;
   const unread = notificationsList.filter((n) => !n.read).length;
 
   async function handleLogout() {
@@ -32,115 +31,66 @@ export default function Navbar({ onMenuClick, basePath, title }) {
   const avatarInitials = (user?.name || "User").slice(0, 2).toUpperCase();
 
   return (
-    <header className="sticky top-3.5 z-30 h-13 macos-island-navbar rounded-2xl flex items-center justify-between px-3.5 sm:px-5 transition-all duration-300">
-      <div className="flex items-center gap-2.5">
-        <button
-          className="lg:hidden p-1.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 macos-bouncy"
-          onClick={onMenuClick}
-          aria-label="Toggle navigation"
-        >
-          <Menu size={19} />
-        </button>
-        <div className="flex items-center gap-2">
-          <h2 className="font-display font-semibold text-slate-900 dark:text-white text-sm sm:text-base tracking-tight truncate max-w-[200px] sm:max-w-none">
-            {title}
-          </h2>
-        </div>
+    <header className="sticky top-0 z-20 h-16 bg-white/70 backdrop-blur-xl border-b border-white/60 shadow-sm flex items-center justify-between px-4 sm:px-6">
+      <div className="flex items-center gap-3">
+        <button className="lg:hidden text-navy-600 hover:text-navy-900" onClick={onMenuClick}><Menu size={22} /></button>
+        <h2 className="font-display font-semibold text-navy-900 text-lg hidden sm:block tracking-tight">{title}</h2>
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-2.5">
-        {/* Quick Theme Toggle with macOS Bounce */}
-        <button
-          type="button"
-          onClick={toggleTheme}
-          title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
-          className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 macos-bouncy border border-transparent hover:border-black/5 dark:hover:border-white/10"
-        >
-          {isDark ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} className="text-slate-600" />}
-        </button>
-
-        {/* Notifications */}
+      <div className="flex items-center gap-2 sm:gap-4">
         <div className="relative">
           <button
-            type="button"
-            className="relative p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 macos-bouncy border border-transparent hover:border-black/5 dark:hover:border-white/10"
+            className="relative p-2 rounded-xl hover:bg-white/80 text-navy-600 transition-colors border border-transparent hover:border-white/60 shadow-none hover:shadow-sm"
             onClick={() => setNotifOpen((o) => !o)}
-            aria-label="Notifications"
           >
-            <Bell size={17} />
+            <Bell size={19} />
             {unread > 0 && (
-              <span className="absolute top-1 right-1 h-4 w-4 rounded-full bg-rose-500 text-white text-[10px] flex items-center justify-center font-bold shadow-xs">
-                {unread}
-              </span>
+              <span className="absolute top-1 right-1 h-4 w-4 rounded-full bg-accent-coral text-white text-[10px] flex items-center justify-center font-bold shadow-sm">{unread}</span>
             )}
           </button>
-          <NotificationPanel
-            open={notifOpen}
-            onClose={() => setNotifOpen(false)}
-            notifications={notificationsList}
-            basePath={basePath}
-          />
+          <NotificationPanel open={notifOpen} onClose={() => setNotifOpen(false)} notifications={notificationsList} basePath={basePath} />
         </div>
 
-        {/* User Profile Island Popover */}
         <div className="relative">
-          <button
-            type="button"
-            className="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 border border-transparent hover:border-black/5 dark:hover:border-white/10 macos-bouncy"
-            onClick={() => setMenuOpen((o) => !o)}
-          >
+          <button className="flex items-center gap-2 pl-2 pr-2 py-1.5 rounded-xl hover:bg-white/80 border border-transparent hover:border-white/80 transition-all shadow-none hover:shadow-sm" onClick={() => setMenuOpen((o) => !o)}>
             {isGoogleAvatar ? (
-              <img
-                src={user.avatar}
-                alt={user.name}
-                className="h-7 w-7 rounded-lg object-cover border border-white/60 dark:border-white/20 shadow-xs"
-              />
+              <img src={user.avatar} alt={user.name} className="h-8 w-8 rounded-full object-cover border border-white/80 shadow-sm" />
             ) : (
-              <div className="h-7 w-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white text-xs font-semibold flex items-center justify-center shadow-xs">
+              <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-navy-800 to-indigo-900 text-white text-xs font-semibold flex items-center justify-center shadow-sm">
                 {user?.avatar || avatarInitials}
               </div>
             )}
-            <div className="hidden sm:block text-left leading-none">
-              <p className="text-xs font-medium text-slate-900 dark:text-slate-100">{user?.name || "User"}</p>
-              <p className="text-[10px] text-blue-600 dark:text-blue-400 font-medium mt-0.5 capitalize">{user?.role || "Account"}</p>
+            <div className="hidden sm:block text-left">
+              <p className="text-xs font-semibold text-navy-900 leading-none">{user?.name || "User"}</p>
+              <p className="text-[10px] text-teal-600 font-semibold mt-0.5 capitalize">{user?.role || "Account"}</p>
             </div>
-            <ChevronDown size={13} className="text-slate-400 hidden sm:block ml-0.5" />
+            <ChevronDown size={14} className="text-navy-400 hidden sm:block" />
           </button>
-
           {menuOpen && (
-            <div className="absolute right-0 top-11 w-52 bg-white/80 dark:bg-slate-900/80 backdrop-blur-3xl rounded-2xl shadow-2xl py-1.5 animate-island-popup border border-white/70 dark:border-white/10 text-slate-800 dark:text-slate-100 z-50">
-              <div className="px-3.5 py-2 border-b border-black/5 dark:border-white/10 mb-1">
-                <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">{user?.name || "Account"}</p>
-                <p className="text-[11px] text-slate-400 dark:text-slate-400 truncate">{user?.email || ""}</p>
+            <div className="absolute right-0 top-12 w-52 bg-white/90 backdrop-blur-2xl rounded-2xl shadow-glass-lg py-2 animate-fade-in border border-white/80">
+              <div className="px-3.5 py-2 border-b border-surface-border mb-1">
+                <p className="text-xs font-bold text-navy-900 truncate">{user?.name || "Account"}</p>
+                <p className="text-[11px] text-navy-400 truncate">{user?.email || ""}</p>
               </div>
 
               <button
-                type="button"
-                onClick={() => {
-                  setMenuOpen(false);
-                  navigate(`${basePath}/profile`);
-                }}
-                className="w-full text-left px-3.5 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-blue-600 hover:text-white flex items-center gap-2 rounded-xl transition-colors macos-bouncy"
+                onClick={() => { setMenuOpen(false); navigate(`${basePath}/profile`); }}
+                className="w-full text-left px-3.5 py-2 text-sm text-navy-700 hover:bg-navy-50 flex items-center gap-2"
               >
-                <UserIcon size={14} /> My Profile
+                <UserIcon size={14} className="text-navy-400" /> My Profile
               </button>
 
               <button
-                type="button"
-                onClick={() => {
-                  setMenuOpen(false);
-                  navigate(`${basePath}/settings`);
-                }}
-                className="w-full text-left px-3.5 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-blue-600 hover:text-white flex items-center gap-2 rounded-xl transition-colors macos-bouncy"
+                onClick={() => { setMenuOpen(false); navigate(`${basePath}/settings`); }}
+                className="w-full text-left px-3.5 py-2 text-sm text-navy-700 hover:bg-navy-50 flex items-center gap-2"
               >
-                <SettingsIcon size={14} /> Settings
+                <SettingsIcon size={14} className="text-navy-400" /> Settings
               </button>
 
-              <div className="border-t border-black/5 dark:border-white/10 mt-1 pt-1">
+              <div className="border-t border-surface-border mt-1 pt-1">
                 <button
-                  type="button"
                   onClick={handleLogout}
-                  className="w-full text-left px-3.5 py-1.5 text-xs text-rose-500 hover:bg-rose-500 hover:text-white flex items-center gap-2 rounded-xl transition-colors macos-bouncy"
+                  className="w-full text-left px-3.5 py-2 text-sm text-accent-coral hover:bg-rose-50 flex items-center gap-2"
                 >
                   <LogOut size={14} /> Logout
                 </button>

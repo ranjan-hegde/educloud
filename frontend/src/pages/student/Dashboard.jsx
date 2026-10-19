@@ -3,6 +3,8 @@ import {
   CalendarCheck, BookOpen, ClipboardList, Bell, GraduationCap, ArrowRight, Clock,
   QrCode, ClipboardEdit, FolderOpen, MessageSquareText, Award, CalendarDays,
 } from "lucide-react";
+import DashboardCard from "../../components/DashboardCard";
+import PageHeader from "../../components/PageHeader";
 import EmptyState from "../../components/EmptyState";
 import { TrendLineChart } from "../../components/StatChart";
 import { useAuth } from "../../context/AuthContext";
@@ -53,106 +55,60 @@ export default function StudentDashboard() {
     ? { subject: overrideEntries[overrideEntries.length - 1][0], ...overrideEntries[overrideEntries.length - 1][1] }
     : null;
 
-  const overallAttendance = attendanceSummary?.overall ?? 84;
-
-  const stats = [
-    { label: "Attendance", value: `${overallAttendance}%`, icon: CalendarCheck, tone: "text-teal-500 bg-teal-500/10" },
-    { label: "Subjects", value: mySubjectNames.length, icon: BookOpen, tone: "text-blue-500 bg-blue-500/10" },
-    { label: "Today's Classes", value: todaysClasses.length, icon: Clock, tone: "text-amber-500 bg-amber-500/10" },
-    { label: "Pending Tasks", value: pending.length, icon: ClipboardList, tone: "text-rose-500 bg-rose-500/10" },
-    { label: "Upcoming Tests", value: upcomingAssessments.length, icon: ClipboardEdit, tone: "text-purple-500 bg-purple-500/10" },
-    { label: "Alerts", value: unread.length, icon: Bell, tone: "text-sky-500 bg-sky-500/10" },
-  ];
+  const overallAttendance = attendanceSummary?.overall ?? 0;
 
   return (
-    <div className="liquid-glass-studio rounded-3xl overflow-hidden animate-fade-in text-slate-800 dark:text-slate-100 mb-8">
-      {/* 1. Header & Quick Actions Strip */}
-      <div className="p-6 sm:p-7 soft-line-b">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-          <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded-full border border-blue-500/20">
-                Academic Workspace
-              </span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-display font-bold text-slate-900 dark:text-white tracking-tight">
-              Welcome back, {(student.name || "Student").split(" ")[0]}
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-              {student.course || "BCA"} · {student.semester || "1st Semester"} · {student.department || "Computer Applications"}
-            </p>
-          </div>
+    <div>
+      <PageHeader
+        title={`Welcome back, ${(student.name || "Student").split(" ")[0]}`}
+        subtitle={`${student.course || "BCA"} · ${student.semester || "1st Semester"} · ${student.department || "Computer Applications"}`}
+      />
 
-          <div className="flex flex-wrap items-center gap-2">
-            {quickActions.map((a) => (
-              <Link
-                key={a.label}
-                to={a.to}
-                className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 border border-white/60 dark:border-white/10 text-slate-800 dark:text-slate-200 transition-all macos-bouncy shadow-xs"
-              >
-                <a.icon size={13} className="text-blue-500" />
-                <span>{a.label}</span>
-              </Link>
-            ))}
-          </div>
+      <div className="card p-5 mb-6">
+        <p className="font-semibold text-navy-900 mb-4">Quick Actions</p>
+        <div className="flex flex-wrap gap-2">
+          {quickActions.map((a) => (
+            <Link key={a.label} to={a.to} className="btn-secondary !py-2 text-xs">
+              <a.icon size={14} /> {a.label}
+            </Link>
+          ))}
         </div>
       </div>
 
-      {/* 2. Key Metrics Strip — Unified horizontal statistics row divided by soft vertical lines (NO cards) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 soft-line-b divide-y sm:divide-y-0 sm:divide-x divide-black/5 dark:divide-white/10">
-        {stats.map((stat) => (
-          <div key={stat.label} className="p-4 sm:p-5 flex items-center justify-between group hover:bg-black/[0.015] dark:hover:bg-white/[0.02] transition-colors">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                {stat.label}
-              </p>
-              <p className="mt-1 text-2xl font-display font-bold text-slate-900 dark:text-white tracking-tight">
-                {stat.value}
-              </p>
-            </div>
-            <div className={`h-8 w-8 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 shadow-xs border border-white/40 dark:border-white/10 ${stat.tone}`}>
-              <stat.icon size={16} />
-            </div>
-          </div>
-        ))}
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
+        <DashboardCard icon={CalendarCheck} label="Attendance" value={`${overallAttendance}%`} tone="teal" />
+        <DashboardCard icon={BookOpen} label="Subjects" value={mySubjectNames.length} tone="navy" />
+        <DashboardCard icon={Clock} label="Today's Classes" value={todaysClasses.length} tone="amber" />
+        <DashboardCard icon={ClipboardList} label="Pending Assignments" value={safeAssignments.filter((a) => a.status === "Pending").length} tone="coral" />
+        <DashboardCard icon={ClipboardEdit} label="Upcoming Assessments" value={upcomingAssessments.length} tone="amber" />
+        <DashboardCard icon={Bell} label="Notifications" value={safeNotifications.filter((n) => !n.read).length} tone="navy" />
       </div>
 
-      {/* 3. Attendance Analytics & Today's Schedule — Divided by soft lines */}
-      <div className="grid lg:grid-cols-3 soft-line-b">
-        <div className="lg:col-span-2 p-6 lg:soft-line-r">
+      <div className="grid lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 card p-5">
           <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="font-semibold text-sm text-slate-900 dark:text-white tracking-tight">Attendance Trend</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500">Monthly progress across 6 semesters</p>
-            </div>
-            <Link to="/student/attendance" className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 macos-bouncy">
-              View details <ArrowRight size={12} />
-            </Link>
+            <p className="font-semibold text-navy-900">Attendance Trend</p>
+            <Link to="/student/attendance" className="text-xs font-semibold text-navy-600 hover:underline flex items-center gap-1">View details <ArrowRight size={12} /></Link>
           </div>
           <TrendLineChart data={attendanceTrend} dataKey="percentage" xKey="month" />
         </div>
 
-        <div className="p-6">
+        <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="font-semibold text-sm text-slate-900 dark:text-white tracking-tight">Today's Classes</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500">{todaysClasses.length} sessions scheduled</p>
-            </div>
-            <Link to="/student/timetable" className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline macos-bouncy">
-              Timetable
-            </Link>
+            <p className="font-semibold text-navy-900">Today's Classes</p>
+            <Link to="/student/timetable" className="text-xs font-semibold text-navy-600 hover:underline">Timetable</Link>
           </div>
           {todaysClasses.length === 0 ? (
             <EmptyState icon={CalendarDays} title="No classes today" message="Check your timetable for the full weekly schedule." />
           ) : (
             <div className="space-y-3">
               {todaysClasses.map((c) => (
-                <div key={c.id} className="flex items-center justify-between text-sm soft-line-b last:border-0 pb-3 last:pb-0">
+                <div key={c.id} className="flex items-center justify-between text-sm border-b border-surface-border last:border-0 pb-3 last:pb-0">
                   <div>
-                    <p className="font-medium text-slate-800 dark:text-slate-200 text-xs sm:text-sm">{c.subject}</p>
-                    <p className="text-[11px] text-slate-400 dark:text-slate-500">{c.room} · {c.faculty}</p>
+                    <p className="font-medium text-navy-800">{c.subject}</p>
+                    <p className="text-xs text-navy-400">{c.room} · {c.faculty}</p>
                   </div>
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded-lg">{c.startTime}</span>
+                  <span className="text-xs font-semibold text-navy-500">{c.startTime}</span>
                 </div>
               ))}
             </div>
@@ -160,58 +116,42 @@ export default function StudentDashboard() {
         </div>
       </div>
 
-      {/* 4. Pending Assignments & Recent Notifications — Divided by soft lines */}
-      <div className="grid lg:grid-cols-2 soft-line-b">
-        <div className="p-6 lg:soft-line-r">
+      <div className="grid lg:grid-cols-2 gap-6 mt-6">
+        <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="font-semibold text-sm text-slate-900 dark:text-white tracking-tight">Pending Assignments</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500">Upcoming coursework deliverables</p>
-            </div>
-            <Link to="/student/assignments" className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline macos-bouncy">
-              View all
-            </Link>
+            <p className="font-semibold text-navy-900">Pending Assignments</p>
+            <Link to="/student/assignments" className="text-xs font-semibold text-navy-600 hover:underline">View all</Link>
           </div>
           {pending.length === 0 ? (
             <EmptyState icon={ClipboardList} title="No pending assignments" message="You're all caught up." />
           ) : (
             <div className="space-y-3">
               {pending.map((a) => (
-                <div key={a.id} className="flex items-center justify-between text-sm soft-line-b last:border-0 pb-3 last:pb-0">
+                <div key={a.id} className="flex items-center justify-between text-sm">
                   <div>
-                    <p className="font-medium text-slate-800 dark:text-slate-200 text-xs sm:text-sm">{a.title}</p>
-                    <p className="text-[11px] text-slate-400 dark:text-slate-500">{a.subject}</p>
+                    <p className="font-medium text-navy-800">{a.title}</p>
+                    <p className="text-xs text-navy-400">{a.subject}</p>
                   </div>
-                  <span className="text-xs font-semibold text-rose-500 dark:text-rose-400 bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded-lg">
-                    Due {a.dueDate}
-                  </span>
+                  <span className="text-xs font-semibold text-accent-coral">Due {a.dueDate}</span>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        <div className="p-6">
+        <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="font-semibold text-sm text-slate-900 dark:text-white tracking-tight">Recent Notifications</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500">Announcements & academic warnings</p>
-            </div>
-            <Link to="/student/notifications" className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline macos-bouncy">
-              View all
-            </Link>
+            <p className="font-semibold text-navy-900">Recent Notifications</p>
+            <Link to="/student/notifications" className="text-xs font-semibold text-navy-600 hover:underline">View all</Link>
           </div>
           {unread.length === 0 ? (
             <EmptyState icon={Bell} title="No new notifications" message="You're all caught up." />
           ) : (
             <div className="space-y-3">
               {unread.map((n) => (
-                <div key={n.id} className="text-sm soft-line-b last:border-0 pb-3 last:pb-0">
-                  <div className="flex items-center justify-between">
-                    <p className="font-medium text-slate-800 dark:text-slate-200 text-xs sm:text-sm">{n.title}</p>
-                    <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />
-                  </div>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500 line-clamp-1 mt-0.5">{n.message}</p>
+                <div key={n.id} className="text-sm">
+                  <p className="font-medium text-navy-800">{n.title}</p>
+                  <p className="text-xs text-navy-400 line-clamp-1">{n.message}</p>
                 </div>
               ))}
             </div>
@@ -219,59 +159,58 @@ export default function StudentDashboard() {
         </div>
       </div>
 
-      {/* 5. Upcoming Assessments, Course Materials, and Recent Feedback — 3 columns with soft vertical lines */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 soft-line-b">
-        <div className="p-6 lg:soft-line-r">
+      <div className="grid lg:grid-cols-3 gap-6 mt-6">
+        <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
-            <p className="font-semibold text-sm text-slate-900 dark:text-white tracking-tight">Upcoming Assessments</p>
-            <Link to="/student/assessments" className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline macos-bouncy">View all</Link>
+            <p className="font-semibold text-navy-900">Upcoming Assessments</p>
+            <Link to="/student/assessments" className="text-xs font-semibold text-navy-600 hover:underline">View all</Link>
           </div>
           {upcomingAssessments.length === 0 ? (
-            <EmptyState icon={ClipboardEdit} title="No upcoming tests" message="Your faculty haven't published any yet." />
+            <EmptyState icon={ClipboardEdit} title="No upcoming assessments" message="Your faculty haven't published any yet." action={<Link to="/student/assessments" className="btn-secondary !py-1.5 text-xs">View Assessments</Link>} />
           ) : (
             <div className="space-y-3">
               {upcomingAssessments.map((a) => (
-                <div key={a.id} className="text-sm soft-line-b last:border-0 pb-2.5 last:pb-0">
-                  <p className="font-medium text-slate-800 dark:text-slate-200 text-xs">{a.subject}</p>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500">{a.title} · {a.date}</p>
+                <div key={a.id} className="text-sm">
+                  <p className="font-medium text-navy-800">{a.subject}</p>
+                  <p className="text-xs text-navy-400">{a.title} · {a.date}</p>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        <div className="p-6 lg:soft-line-r">
+        <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
-            <p className="font-semibold text-sm text-slate-900 dark:text-white tracking-tight">Course Materials</p>
-            <Link to="/student/subjects" className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline macos-bouncy">View all</Link>
+            <p className="font-semibold text-navy-900">Course Materials</p>
+            <Link to="/student/subjects" className="text-xs font-semibold text-navy-600 hover:underline">View all</Link>
           </div>
           {recentMaterials.length === 0 ? (
-            <EmptyState icon={FolderOpen} title="No materials yet" message="Notes & slides from faculty appear here." />
+            <EmptyState icon={FolderOpen} title="No materials yet" message="Notes, slides, and links from your faculty will appear here." />
           ) : (
             <div className="space-y-3">
               {recentMaterials.map((m) => (
-                <div key={m.id} className="text-sm soft-line-b last:border-0 pb-2.5 last:pb-0">
-                  <p className="font-medium text-slate-800 dark:text-slate-200 text-xs">{m.title}</p>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500">{m.subject} · {m.type}</p>
+                <div key={m.id} className="text-sm">
+                  <p className="font-medium text-navy-800">{m.title}</p>
+                  <p className="text-xs text-navy-400">{m.subject} · {m.type}</p>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        <div className="p-6">
+        <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
-            <p className="font-semibold text-sm text-slate-900 dark:text-white tracking-tight">Recent Feedback</p>
-            <Link to="/student/feedback" className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline macos-bouncy">View all</Link>
+            <p className="font-semibold text-navy-900">Recent Feedback</p>
+            <Link to="/student/feedback" className="text-xs font-semibold text-navy-600 hover:underline">View all</Link>
           </div>
           {myFeedback.length === 0 ? (
-            <EmptyState icon={MessageSquareText} title="No feedback submitted" message="Share feedback on your subjects." />
+            <EmptyState icon={MessageSquareText} title="No feedback submitted" message="Share feedback on your subjects and faculty." action={<Link to="/student/feedback" className="btn-secondary !py-1.5 text-xs">Submit Feedback</Link>} />
           ) : (
             <div className="space-y-3">
               {myFeedback.map((f) => (
-                <div key={f.id} className="text-sm soft-line-b last:border-0 pb-2.5 last:pb-0">
-                  <p className="font-medium text-slate-800 dark:text-slate-200 text-xs">{f.subjectName}</p>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500 line-clamp-1">{f.message}</p>
+                <div key={f.id} className="text-sm">
+                  <p className="font-medium text-navy-800">{f.subjectName}</p>
+                  <p className="text-xs text-navy-400 line-clamp-1">{f.message}</p>
                 </div>
               ))}
             </div>
@@ -279,43 +218,34 @@ export default function StudentDashboard() {
         </div>
       </div>
 
-      {/* 6. Academic Results & Recent Marks Performance Strip — Divided by soft line */}
-      <div className="grid sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-black/5 dark:divide-white/10 p-4 sm:p-5">
-        <div className="p-3 sm:p-4 flex items-center justify-between gap-4">
+      <div className="grid sm:grid-cols-2 gap-6 mt-6">
+        <div className="card p-5 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/20 shadow-xs">
-              <GraduationCap size={20} />
-            </div>
+            <GraduationCap size={20} className="text-navy-700" />
             <div>
-              <p className="font-semibold text-slate-900 dark:text-white text-sm">Latest SGPA: {resultsData?.sgpa ?? "8.5"}</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500">CGPA {resultsData?.cgpa ?? "8.4"} · {student.semester || resultsData?.semester || "1st Semester"}</p>
+              <p className="font-semibold text-navy-900 text-sm">Latest SGPA: {resultsData?.sgpa ?? "8.5"}</p>
+              <p className="text-xs text-navy-400">CGPA {resultsData?.cgpa ?? "8.4"} · {student.semester || resultsData?.semester || "1st Semester"}</p>
             </div>
           </div>
-          <Link to="/student/results" className="btn-secondary !py-1.5 !px-3 text-xs macos-bouncy">
-            View Results
-          </Link>
+          <Link to="/student/results" className="btn-secondary !py-2">View Results</Link>
         </div>
 
-        <div className="p-3 sm:p-4 flex items-center justify-between gap-4">
+        <div className="card p-5 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/20 shadow-xs">
-              <Award size={20} />
-            </div>
+            <Award size={20} className="text-navy-700" />
             {recentMark ? (
               <div>
-                <p className="font-semibold text-slate-900 dark:text-white text-sm">Recent Marks: {recentMark.subject}</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500">{recentMark.total}/100 · Grade {recentMark.grade}</p>
+                <p className="font-semibold text-navy-900 text-sm">Recent Marks: {recentMark.subject}</p>
+                <p className="text-xs text-navy-400">{recentMark.total}/100 · Grade {recentMark.grade}</p>
               </div>
             ) : (
               <div>
-                <p className="font-semibold text-slate-900 dark:text-white text-sm">No new marks yet</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500">Updated marks will appear once entered by faculty.</p>
+                <p className="font-semibold text-navy-900 text-sm">No new marks yet</p>
+                <p className="text-xs text-navy-400">Updated marks will appear here once entered by faculty.</p>
               </div>
             )}
           </div>
-          <Link to="/student/results" className="btn-secondary !py-1.5 !px-3 text-xs macos-bouncy">
-            View Results
-          </Link>
+          <Link to="/student/results" className="btn-secondary !py-2">View Results</Link>
         </div>
       </div>
     </div>

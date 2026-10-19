@@ -173,16 +173,6 @@ export function getData(key) {
 export function setData(key, value) {
   const actualKey = resolveStorageKey(key);
   const ns = readNamespace();
-
-  // Echo protection: skip redundant write & dispatch if data hasn't changed
-  try {
-    if (ns[actualKey] !== undefined && JSON.stringify(ns[actualKey]) === JSON.stringify(value)) {
-      return value;
-    }
-  } catch {
-    // proceed
-  }
-
   ns[actualKey] = value;
   writeNamespace(ns);
   if (typeof window !== "undefined" && typeof window.dispatchEvent === "function") {

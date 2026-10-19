@@ -3,326 +3,86 @@
 @tailwind utilities;
 
 @layer base {
-  html {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
-  }
-
+  html { -webkit-font-smoothing: antialiased; }
   body {
-    @apply font-sans selection:bg-blue-500/25 selection:text-blue-900 dark:selection:bg-blue-400/30 dark:selection:text-blue-100;
-    transition: background-color 0.3s ease, color 0.3s ease;
-  }
-
-  /* Peaceful Mountain Landscape Background with Glassmorphism Overlays — Light Mode */
-  body {
-    background-color: #0f172a;
-    color: #1e293b;
+    @apply bg-surface-muted text-navy-900 font-sans selection:bg-accent-teal/20 selection:text-navy-950;
     background-image: 
-      linear-gradient(to bottom, rgba(255, 255, 255, 0.40), rgba(241, 245, 249, 0.58)),
-      radial-gradient(at 15% 15%, rgba(0, 122, 255, 0.10) 0px, transparent 50%),
-      radial-gradient(at 85% 85%, rgba(48, 176, 199, 0.10) 0px, transparent 50%),
-      url('/mountains-peace.jpg');
-    background-size: cover;
-    background-position: center 30%;
+      radial-gradient(at 0% 0%, rgba(14, 165, 160, 0.05) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.05) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(224, 166, 58, 0.04) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, rgba(59, 130, 246, 0.05) 0px, transparent 50%);
     background-attachment: fixed;
-    background-repeat: no-repeat;
   }
-
-  /* Peaceful Mountain Landscape Background with Glassmorphism Overlays — Dark Mode */
-  .dark body {
-    background-color: #020617;
-    color: #f1f5f9;
-    background-image: 
-      linear-gradient(to bottom, rgba(10, 15, 29, 0.72), rgba(2, 6, 23, 0.88)),
-      radial-gradient(at 15% 15%, rgba(14, 116, 244, 0.18) 0px, transparent 50%),
-      radial-gradient(at 85% 85%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
-      url('/mountains-peace.jpg');
-    background-size: cover;
-    background-position: center 30%;
-    background-attachment: fixed;
-    background-repeat: no-repeat;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-display tracking-tight text-slate-900 dark:text-white;
-  }
-
+  h1, h2, h3, h4 { @apply font-display text-navy-900; }
   *:focus-visible {
-    outline: 2px solid #007aff;
+    outline: 2px solid #0ea5a0;
     outline-offset: 2px;
   }
 }
 
 @layer components {
-  /* ============================================================
-     LIQUID GLASS & ISLAND SYSTEM (Glassmorphism Overlays)
-     ============================================================ */
-  
-  .liquid-glass {
-    @apply bg-white/55 dark:bg-slate-900/55 backdrop-blur-3xl border border-white/60 dark:border-white/10 transition-all duration-300;
-    box-shadow: 0 12px 35px -5px rgba(0, 0, 0, 0.08), inset 0 1px 1px 0 rgba(255, 255, 255, 0.65), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.03);
-  }
-  .dark .liquid-glass {
-    box-shadow: 0 16px 45px -5px rgba(0, 0, 0, 0.55), inset 0 1px 1px 0 rgba(255, 255, 255, 0.18), inset 0 -1px 0 0 rgba(0, 0, 0, 0.6);
-  }
-
-  .liquid-glass-elevated {
-    @apply bg-white/70 dark:bg-slate-900/70 backdrop-blur-3xl border border-white/70 dark:border-white/15 shadow-glass-lg transition-all duration-300;
-  }
-
-  /* Liquid Glass Cards Floating Over Mountain Canvas */
+  /* Glassmorphism Card System */
   .card {
-    @apply bg-white/60 dark:bg-slate-900/55 backdrop-blur-2xl border border-white/70 dark:border-white/10 rounded-2xl transition-all duration-300 text-slate-900 dark:text-slate-100;
-    box-shadow: 
-      0 10px 30px -4px rgba(0, 0, 0, 0.07),
-      inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.8),
-      inset 0 -1px 1px 0 rgba(0, 0, 0, 0.02);
-  }
-  .dark .card {
-    box-shadow: 
-      0 14px 40px -4px rgba(0, 0, 0, 0.55),
-      inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.14),
-      inset 0 -1px 0 0 rgba(0, 0, 0, 0.5);
+    @apply bg-white/80 backdrop-blur-xl border border-white/70 rounded-2xl shadow-glass transition-all duration-200;
   }
   .card:hover {
-    @apply border-white/95 dark:border-white/20;
-    transform: translateY(-2px);
+    @apply shadow-glass-lg border-white/90;
   }
-
   .card-glass-glow {
-    @apply bg-gradient-to-br from-white/80 via-white/60 to-white/45 dark:from-slate-800/75 dark:via-slate-900/65 dark:to-slate-950/75 backdrop-blur-3xl border border-white/80 dark:border-white/15 shadow-glass-lg;
+    @apply bg-gradient-to-br from-white/90 via-white/70 to-white/50 backdrop-blur-2xl border border-white/80 shadow-glass;
   }
-
   .card-dark-glass {
-    @apply bg-slate-900/80 backdrop-blur-3xl border border-white/15 text-white shadow-2xl;
+    @apply bg-navy-900/85 backdrop-blur-2xl border border-white/10 text-white shadow-2xl;
   }
 
-  /* ============================================================
-     LIQUID GLASS STUDIO (inspired by iyinchao/liquid-glass-studio)
-     Single Monolithic Glass Canvas with Chromatic Dispersion & Caustic Glare
-     ============================================================ */
-  
-  .liquid-glass-studio {
-    background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.65) 0%,
-      rgba(255, 255, 255, 0.40) 45%,
-      rgba(255, 255, 255, 0.52) 100%
-    );
-    backdrop-filter: blur(40px) saturate(210%) contrast(102%);
-    -webkit-backdrop-filter: blur(40px) saturate(210%) contrast(102%);
-    border: 1px solid rgba(255, 255, 255, 0.70);
-    box-shadow: 
-      0 30px 60px -15px rgba(0, 0, 0, 0.16),
-      0 12px 28px -10px rgba(0, 0, 0, 0.08),
-      inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.95),
-      inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.04),
-      inset 1.5px 0 2.5px -1px rgba(0, 122, 255, 0.25),
-      inset -1.5px 0 2.5px -1px rgba(236, 72, 153, 0.22);
-  }
-
-  .dark .liquid-glass-studio {
-    background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.09) 0%,
-      rgba(15, 23, 42, 0.68) 45%,
-      rgba(10, 16, 32, 0.80) 100%
-    );
-    backdrop-filter: blur(40px) saturate(210%) contrast(102%);
-    -webkit-backdrop-filter: blur(40px) saturate(210%) contrast(102%);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow: 
-      0 35px 70px -15px rgba(0, 0, 0, 0.75),
-      0 16px 36px -10px rgba(0, 0, 0, 0.55),
-      inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.28),
-      inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.6),
-      inset 1.5px 0 2.5px -1px rgba(56, 189, 248, 0.28),
-      inset -1.5px 0 2.5px -1px rgba(168, 85, 247, 0.25);
-  }
-
-  /* Soft Line Dividers for Monolithic Glass */
-  .soft-line-b {
-    border-bottom: 1px solid rgba(0, 0, 0, 0.07);
-  }
-  .dark .soft-line-b {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  .soft-line-r {
-    border-right: 1px solid rgba(0, 0, 0, 0.07);
-  }
-  .dark .soft-line-r {
-    border-right: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  .soft-line-t {
-    border-top: 1px solid rgba(0, 0, 0, 0.07);
-  }
-  .dark .soft-line-t {
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  /* macOS Floating Island Sidebar */
-  .macos-island-sidebar {
-    background: rgba(255, 255, 255, 0.56);
-    backdrop-filter: blur(36px) saturate(190%);
-    -webkit-backdrop-filter: blur(36px) saturate(190%);
-    border: 1px solid rgba(255, 255, 255, 0.65);
-    box-shadow: 
-      0 20px 50px -10px rgba(0, 0, 0, 0.15),
-      0 0 0 1px rgba(255, 255, 255, 0.3),
-      inset 0 1px 2px 0 rgba(255, 255, 255, 0.85);
-  }
-  .dark .macos-island-sidebar {
-    background: rgba(15, 23, 42, 0.62);
-    backdrop-filter: blur(36px) saturate(190%);
-    -webkit-backdrop-filter: blur(36px) saturate(190%);
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    box-shadow: 
-      0 25px 60px -10px rgba(0, 0, 0, 0.65),
-      0 0 0 1px rgba(255, 255, 255, 0.05),
-      inset 0 1px 1px 0 rgba(255, 255, 255, 0.2);
-  }
-
-  /* macOS Floating Island Navbar */
-  .macos-island-navbar {
-    background: rgba(255, 255, 255, 0.52);
-    backdrop-filter: blur(32px) saturate(190%);
-    -webkit-backdrop-filter: blur(32px) saturate(190%);
-    border: 1px solid rgba(255, 255, 255, 0.60);
-    box-shadow: 
-      0 10px 30px -5px rgba(0, 0, 0, 0.08),
-      inset 0 1px 1px 0 rgba(255, 255, 255, 0.8);
-  }
-  .dark .macos-island-navbar {
-    background: rgba(15, 23, 42, 0.60);
-    backdrop-filter: blur(32px) saturate(190%);
-    -webkit-backdrop-filter: blur(32px) saturate(190%);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: 
-      0 12px 35px -5px rgba(0, 0, 0, 0.5),
-      inset 0 1px 1px 0 rgba(255, 255, 255, 0.18);
-  }
-
-  /* macOS Finder Item with Bouncy Physics */
-  .macos-finder-item {
-    @apply flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all duration-200 select-none cursor-pointer;
-  }
-  .macos-finder-item:active {
-    transform: scale(0.93) translateY(1px);
-    transition: transform 0.08s cubic-bezier(0.3, 0, 0.8, 0.15);
-  }
-  .macos-finder-item-active {
-    @apply bg-blue-600 text-white shadow-md font-semibold;
-    box-shadow: 0 4px 14px rgba(0, 122, 255, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.4);
-  }
-  .macos-finder-item-inactive {
-    @apply text-slate-700 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white;
-  }
-
-  /* Tactile Bouncy Spring Physics */
-  .macos-bouncy {
-    transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background-color 0.2s ease;
-  }
-  .macos-bouncy:active {
-    transform: scale(0.92) translateY(2px) !important;
-    transition: transform 0.08s cubic-bezier(0.3, 0, 0.8, 0.15);
-  }
-  .macos-bouncy:hover {
-    transform: translateY(-1px) scale(1.02);
-  }
-
-  /* Liquid Buttons with Spring Response */
+  /* Glass Buttons */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium select-none macos-bouncy disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed select-none;
   }
-
   .btn-primary {
-    @apply btn bg-gradient-to-b from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 border border-blue-400/30;
-    box-shadow: 
-      0 4px 14px rgba(0, 122, 255, 0.35),
-      inset 0 1px 1px rgba(255, 255, 255, 0.45);
+    @apply btn bg-gradient-to-r from-navy-900 via-navy-800 to-indigo-950 text-white hover:from-navy-950 hover:to-indigo-900 shadow-md hover:shadow-lg active:scale-[0.98] border border-white/10;
   }
-
   .btn-accent {
-    @apply btn bg-gradient-to-b from-teal-500 to-teal-600 text-white hover:from-teal-600 hover:to-teal-700 border border-teal-400/30;
-    box-shadow: 
-      0 4px 14px rgba(20, 184, 166, 0.35),
-      inset 0 1px 1px rgba(255, 255, 255, 0.45);
+    @apply btn bg-gradient-to-r from-accent-teal to-teal-600 text-white hover:from-teal-600 hover:to-teal-700 shadow-glow-teal active:scale-[0.98];
   }
-
   .btn-secondary {
-    @apply btn bg-white/70 dark:bg-slate-800/70 backdrop-blur-md text-slate-800 dark:text-slate-100 border border-white/70 dark:border-white/10 hover:bg-white dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-white/20;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.7);
+    @apply btn bg-white/80 backdrop-blur-md text-navy-800 border border-white/80 hover:bg-white hover:border-slate-300 shadow-sm hover:shadow active:scale-[0.98];
   }
-
   .btn-outline {
-    @apply btn bg-white/40 dark:bg-slate-800/40 backdrop-blur-sm text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-white/10 hover:bg-white/80 dark:hover:bg-slate-800/80 hover:border-slate-300;
+    @apply btn bg-white/40 backdrop-blur-sm text-navy-700 border border-slate-200/80 hover:bg-white/80 hover:border-navy-300;
   }
-
   .btn-danger {
-    @apply btn bg-rose-500 text-white hover:bg-rose-600;
-    box-shadow: 0 4px 14px rgba(244, 63, 94, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+    @apply btn bg-accent-coral text-white hover:opacity-90 shadow-sm;
   }
-
   .btn-ghost {
-    @apply btn text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white backdrop-blur-xs;
+    @apply btn text-navy-600 hover:bg-white/60 hover:text-navy-900 backdrop-blur-xs;
   }
 
-  /* Liquid Form Inputs */
+  /* Glass Form Elements */
   .input {
-    @apply w-full rounded-xl border border-white/60 dark:border-white/10 bg-white/70 dark:bg-slate-900/60 backdrop-blur-md px-3.5 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-slate-900 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-500/15 shadow-sm transition-all duration-200;
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
+    @apply w-full rounded-xl border border-slate-200/80 bg-white/80 backdrop-blur-md px-3.5 py-2.5 text-sm text-navy-900 placeholder:text-navy-300 focus:bg-white focus:border-accent-teal focus:ring-4 focus:ring-accent-teal/15 shadow-sm transition-all duration-150;
   }
-
   .label {
-    @apply block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5 uppercase tracking-wider;
+    @apply block text-xs font-semibold text-navy-600 mb-1.5 uppercase tracking-wider;
   }
 
-  /* Liquid Badges */
+  /* Modern Glass Badges */
   .badge {
-    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold backdrop-blur-md transition-colors;
-    box-shadow: inset 0 1px 0.5px rgba(255, 255, 255, 0.5);
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold backdrop-blur-sm;
   }
-  .badge-green { @apply badge bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25; }
-  .badge-amber { @apply badge bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/25; }
-  .badge-red { @apply badge bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/25; }
-  .badge-blue { @apply badge bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/25; }
-  .badge-gray { @apply badge bg-slate-500/15 text-slate-700 dark:text-slate-300 border border-slate-500/25; }
-  .badge-teal { @apply badge bg-teal-500/15 text-teal-700 dark:text-teal-300 border border-teal-500/25; }
-  .badge-purple { @apply badge bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/25; }
+  .badge-green { @apply badge bg-emerald-500/10 text-emerald-700 border border-emerald-500/20; }
+  .badge-amber { @apply badge bg-amber-500/10 text-amber-700 border border-amber-500/20; }
+  .badge-red { @apply badge bg-rose-500/10 text-rose-700 border border-rose-500/20; }
+  .badge-blue { @apply badge bg-sky-500/10 text-sky-700 border border-sky-500/20; }
+  .badge-gray { @apply badge bg-slate-500/10 text-slate-700 border border-slate-500/20; }
+  .badge-teal { @apply badge bg-teal-500/10 text-teal-700 border border-teal-500/20; }
 }
 
-/* Animations & macOS Spring Physics */
-.animate-fade-in {
-  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
+/* Animations */
+.animate-fade-in { animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
-}
-
-/* macOS Interactive Dock Bounce on Click */
-@keyframes macosBounce {
-  0% { transform: scale(1) translateY(0); }
-  25% { transform: scale(0.92) translateY(2px); }
-  50% { transform: scale(1.09) translateY(-6px); }
-  75% { transform: scale(0.98) translateY(1px); }
-  100% { transform: scale(1) translateY(0); }
-}
-.animate-macos-bounce {
-  animation: macosBounce 0.48s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-}
-
-/* Island Popup Spring Entrance */
-@keyframes islandPopup {
-  0% { opacity: 0; transform: scale(0.93) translateY(10px); }
-  60% { opacity: 1; transform: scale(1.02) translateY(-2px); }
-  100% { opacity: 1; transform: scale(1) translateY(0); }
-}
-.animate-island-popup {
-  animation: islandPopup 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
 .animate-pulse-slow {
@@ -335,17 +95,5 @@
 
 /* Glassmorphism scrollbar */
 .scrollbar-thin::-webkit-scrollbar { height: 6px; width: 6px; }
-.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
-.scrollbar-thin::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.35);
-  border-radius: 999px;
-}
-.scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.55);
-}
-.dark .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.2);
-}
-.dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.4);
-}
+.scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(180, 195, 220, 0.6); border-radius: 999px; }
+.scrollbar-thin::-webkit-scrollbar-thumb:hover { background: rgba(140, 165, 200, 0.8); }
