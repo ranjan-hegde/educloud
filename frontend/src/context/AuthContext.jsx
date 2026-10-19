@@ -56,8 +56,21 @@ export function AuthProvider({ children }) {
     });
   }
 
+  async function loginWithGoogle({ googleUser, role, remember = true }) {
+    const res = await authService.loginWithGoogle({ googleUser, role });
+    setUser(res.user);
+    if (remember) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(res.user));
+      sessionStorage.removeItem(STORAGE_KEY);
+    } else {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(res.user));
+      localStorage.removeItem(STORAGE_KEY);
+    }
+    return res.user;
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, updateProfile }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

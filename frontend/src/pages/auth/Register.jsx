@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import * as authService from "../../services/authService";
 import { useToast } from "../../context/ToastContext";
+import GoogleSignInButton from "../../components/GoogleSignInButton";
 
 const departments = ["Computer Applications", "Computer Science", "Commerce", "Electronics"];
 const courses = ["BCA", "B.Sc Computer Science", "B.Com", "B.Tech ECE"];
@@ -144,6 +145,13 @@ export default function Register() {
         <button type="submit" disabled={loading} className="btn-primary w-full">
           {loading ? <><Loader2 size={16} className="animate-spin" /> Creating account...</> : "Create account"}
         </button>
+
+        <div className="relative my-4">
+          <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-surface-border"></div></div>
+          <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-navy-400 font-medium">Or continue with</span></div>
+        </div>
+
+        <GoogleSignInButton role={form.role} text="Register with Google" />
       </form>
 
       <p className="text-sm text-navy-500 text-center mt-6">

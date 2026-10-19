@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
+import GoogleSignInButton from "../../components/GoogleSignInButton";
 
 export default function Login() {
   const [role, setRole] = useState("");
@@ -123,6 +124,13 @@ export default function Login() {
         <button type="submit" disabled={loading} className="btn-primary w-full">
           {loading ? <><Loader2 size={16} className="animate-spin" /> Signing in...</> : "Login"}
         </button>
+
+        <div className="relative my-4">
+          <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-surface-border"></div></div>
+          <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-navy-400 font-medium">Or continue with</span></div>
+        </div>
+
+        <GoogleSignInButton role={role} text="Sign in with Google" />
       </form>
 
       <div className="mt-6 rounded-xl bg-navy-50 border border-navy-100 p-3.5">

@@ -9,6 +9,7 @@
 // that still scopes the model's context to the caller's own role and data.
 
 import { delay } from "./_utils";
+import api from "./api";
 import * as storageService from "./storageService";
 import { currentFaculty, currentStudent, subjects as allSubjects, resultsData } from "../data/mockData";
 
@@ -400,14 +401,60 @@ function answerAdmin(question) {
 }
 
 // ---------------------------------------------------------------------
-// Public entry point
 // ---------------------------------------------------------------------
-export function getBotReply(question, context = {}) {
-  const role = context.role || "student";
+// Public entry point: Real Gemini AI Agent
+// ---------------------------------------------------------------------
+export async function getBotReply(question, context = {}) {
+  // 1. Try calling the real backend Gemini proxy (secure server-side key)
+  try {
+    const res = await api("/api/ai/chat", {
+      method: "POST",
+      body: JSON.stringify({ message: question }),
+    });
+    if (res?.data?.reply) return res.data.reply;
+    if (res?.reply) return res.reply;
+  } catch (err) {
+    // If backend isn't available or returned an error, try direct client key
+  }
+
+  // 2. Direct client-side Google AI Studio Gemini API if configured
+  const clientKey = import.meta.env.VITE_GEMINI_API_KEY;
+  if (clientKey && clientKey !== "your-gemini-api-key") {
+    try {
+      const model = import.meta.env.VITE_GEMINI_MODEL || "gemini-1.5-flash";
+      const studentName = context.user?.name || currentStudent.name;
+      const sysPrompt =
+        `You are EduCloud AI, an intelligent, helpful academic assistant for ${studentName}. ` +
+        `Answer general knowledge questions (like science, history, coding, pop culture, trivia, Donald Trump, etc.) ` +
+        `accurately, directly, and naturally. If asked about student/academic advice, be encouraging and practical.\n\n` +
+        `User Question: ${question}`;
+
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${clientKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: sysPrompt }] }],
+          }),
+        }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) return text;
+      }
+    } catch {
+      // Fall through to local fallback
+    }
+  }
+
+  // 3. Graceful offline fallback
+  const role = context.role || context.user?.role || "student";
   let answer;
   if (role === "student") answer = answerStudent(question);
   else if (role === "faculty") answer = answerFaculty(question);
   else if (role === "admin") answer = answerAdmin(question);
   else answer = "I'm not sure how to help with that yet.";
-  return delay(answer, 700);
+  return delay(answer, 500);
 }

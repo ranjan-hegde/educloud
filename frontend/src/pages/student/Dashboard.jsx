@@ -7,11 +7,9 @@ import DashboardCard from "../../components/DashboardCard";
 import PageHeader from "../../components/PageHeader";
 import EmptyState from "../../components/EmptyState";
 import { TrendLineChart } from "../../components/StatChart";
+import { useAuth } from "../../context/AuthContext";
 import { currentStudent, attendanceTrend, resultsData, subjects } from "../../data/mockData";
 import { usePersistentState } from "../../hooks/usePersistentState";
-
-const studentClass = `${currentStudent.course} ${currentStudent.semester}`;
-const mySubjectNames = subjects.filter((s) => s.course === currentStudent.course).map((s) => s.name);
 
 const quickActions = [
   { label: "Scan Attendance QR", to: "/student/qr-attendance", icon: QrCode },
@@ -23,6 +21,11 @@ const quickActions = [
 ];
 
 export default function StudentDashboard() {
+  const { user } = useAuth();
+  const student = user || currentStudent;
+  const studentClass = `${student.course || "BCA"} ${student.semester || "5th Semester"}`;
+  const mySubjectNames = subjects.filter((s) => !student.course || s.course === student.course).map((s) => s.name);
+
   const [assignments] = usePersistentState("assignments");
   const [notifications] = usePersistentState("notifications");
   const [assessments] = usePersistentState("assessments");
@@ -36,7 +39,7 @@ export default function StudentDashboard() {
   const unread = notifications.filter((n) => !n.read).slice(0, 4);
   const upcomingAssessments = assessments.filter((a) => mySubjectNames.includes(a.subject) && a.status === "Published").slice(0, 4);
   const recentMaterials = courseMaterials.filter((m) => mySubjectNames.includes(m.subject)).slice(0, 4);
-  const myFeedback = feedback.filter((f) => f.studentId === currentStudent.id).slice(0, 3);
+  const myFeedback = feedback.filter((f) => f.studentId === student.id).slice(0, 3);
   const todayISO = new Date().toISOString().slice(0, 10);
   const todaysClasses = qrSessions.filter((s) => s.class === studentClass && s.date === todayISO);
 
@@ -47,7 +50,10 @@ export default function StudentDashboard() {
 
   return (
     <div>
-      <PageHeader title={`Welcome back, ${currentStudent.name.split(" ")[0]}`} subtitle={`${currentStudent.course} · ${currentStudent.semester} · ${currentStudent.department}`} />
+      <PageHeader
+        title={`Welcome back, ${(student.name || "Student").split(" ")[0]}`}
+        subtitle={`${student.course || "BCA"} · ${student.semester || "1st Semester"} · ${student.department || "Computer Applications"}`}
+      />
 
       <div className="card p-5 mb-6">
         <p className="font-semibold text-navy-900 mb-4">Quick Actions</p>

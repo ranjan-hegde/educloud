@@ -56,10 +56,12 @@ public class AiChatService {
         }
 
         try {
-            String prompt = "You are EduCloud's assistant for a Cloud-Based Student Management System. " +
-                    "Answer ONLY using the context below about the currently logged-in user — never invent data, " +
-                    "and never discuss another student's or faculty member's records.\n\n" +
-                    "Context:\n" + context + "\n\nUser question: " + userMessage;
+            String prompt = "You are EduCloud AI, an intelligent, helpful academic assistant. " +
+                    "You have two core capabilities:\n" +
+                    "1. When the user asks about their academic records, attendance, marks, courses, or schedule, reference their personalized Context below.\n" +
+                    "2. When the user asks ANY general knowledge, science, programming, history, current events, trivia, or conversational question (such as 'what is the hair color of Donald Trump'), answer directly, accurately, and naturally as a real AI assistant!\n\n" +
+                    "Context about logged-in user:\n" + context + "\n\n" +
+                    "User Question: " + userMessage;
 
             Map<String, Object> body = Map.of(
                     "contents", List.of(Map.of("parts", List.of(Map.of("text", prompt))))

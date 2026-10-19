@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Locale;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -116,6 +117,75 @@ public class AuthService {
         Long profileId = resolveProfileId(user);
         String token = jwtService.generateToken(new AppUserPrincipal(user), user.getId(), user.getRole().name());
 
+        return AuthResponse.builder()
+                .token(token)
+                .user(toSummary(user, profileId))
+                .build();
+    }
+
+    @Transactional
+    public AuthResponse googleLogin(GoogleAuthRequest req) {
+        String email = req.getEmail().toLowerCase(Locale.ROOT);
+        User user = userRepository.findByEmailIgnoreCase(email).orElse(null);
+
+        Role role = req.getRole() != null ? req.getRole() : Role.STUDENT;
+
+        if (user == null) {
+            user = User.builder()
+                    .name(req.getName())
+                    .email(email)
+                    .passwordHash(passwordEncoder.encode(UUID.randomUUID().toString()))
+                    .role(role)
+                    .enabled(true)
+                    .build();
+            user = userRepository.save(user);
+
+            Long profileId;
+            switch (role) {
+                case STUDENT -> {
+                    Department dept = departmentRepository.findAll().stream().findFirst().orElse(null);
+                    Course course = courseRepository.findAll().stream().findFirst().orElse(null);
+                    Student student = Student.builder()
+                            .user(user)
+                            .department(dept)
+                            .course(course)
+                            .semester(1)
+                            .status(Student.StudentStatus.ACTIVE)
+                            .academicYear("2026-2027")
+                            .build();
+                    student = studentRepository.save(student);
+                    student.setRollNo("STU" + (2500 + student.getId()));
+                    student = studentRepository.save(student);
+                    profileId = student.getId();
+                }
+                case FACULTY -> {
+                    Department dept = departmentRepository.findAll().stream().findFirst().orElse(null);
+                    Faculty faculty = Faculty.builder()
+                            .user(user)
+                            .department(dept)
+                            .designation("Assistant Professor")
+                            .status(Faculty.FacultyStatus.ACTIVE)
+                            .build();
+                    faculty = facultyRepository.save(faculty);
+                    profileId = faculty.getId();
+                }
+                case ADMIN -> {
+                    Admin admin = Admin.builder().user(user).designation("Administrator").build();
+                    admin = adminRepository.save(admin);
+                    profileId = admin.getId();
+                }
+                default -> throw new BadRequestException("Unsupported role.");
+            }
+
+            String token = jwtService.generateToken(new AppUserPrincipal(user), user.getId(), user.getRole().name());
+            return AuthResponse.builder()
+                    .token(token)
+                    .user(toSummary(user, profileId))
+                    .build();
+        }
+
+        Long profileId = resolveProfileId(user);
+        String token = jwtService.generateToken(new AppUserPrincipal(user), user.getId(), user.getRole().name());
         return AuthResponse.builder()
                 .token(token)
                 .user(toSummary(user, profileId))

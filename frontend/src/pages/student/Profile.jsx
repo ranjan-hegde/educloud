@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Pencil, Save, X } from "lucide-react";
 import PageHeader from "../../components/PageHeader";
 import { currentStudent } from "../../data/mockData";
+import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 
 const fields = [
@@ -12,14 +13,25 @@ const fields = [
 ];
 
 export default function StudentProfile() {
+  const { user, updateProfile } = useAuth();
+  const student = user || currentStudent;
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState(currentStudent);
+  const [form, setForm] = useState(student);
   const toast = useToast();
 
+  useEffect(() => {
+    if (user) {
+      setForm((prev) => ({ ...currentStudent, ...prev, ...user }));
+    }
+  }, [user]);
+
   function handleSave() {
+    updateProfile(form);
     setEditing(false);
     toast.success("Profile updated successfully.");
   }
+
+  const avatarText = form.avatar || form.name?.slice(0, 2)?.toUpperCase() || "ST";
 
   return (
     <div>
@@ -29,7 +41,7 @@ export default function StudentProfile() {
         actions={
           editing ? (
             <>
-              <button className="btn-secondary" onClick={() => { setForm(currentStudent); setEditing(false); }}><X size={15} /> Cancel</button>
+              <button className="btn-secondary" onClick={() => { setForm(student); setEditing(false); }}><X size={15} /> Cancel</button>
               <button className="btn-primary" onClick={handleSave}><Save size={15} /> Save Changes</button>
             </>
           ) : (
@@ -41,11 +53,11 @@ export default function StudentProfile() {
       <div className="card p-6">
         <div className="flex items-center gap-4 mb-6 pb-6 border-b border-surface-border">
           <div className="h-20 w-20 rounded-2xl bg-navy-800 text-white flex items-center justify-center text-2xl font-display font-semibold">
-            {currentStudent.avatar}
+            {avatarText}
           </div>
           <div>
             <p className="text-lg font-semibold text-navy-900">{form.name}</p>
-            <p className="text-sm text-navy-400">{currentStudent.id} · {currentStudent.course}</p>
+            <p className="text-sm text-navy-400">{form.rollNo || form.id || "Student"} · {form.course || "BCA"}</p>
           </div>
         </div>
 
@@ -58,10 +70,9 @@ export default function StudentProfile() {
                   className="input"
                   value={form[key] || ""}
                   onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
-                  disabled={["rollNo", "department", "course"].includes(key)}
                 />
               ) : (
-                <p className="text-sm text-navy-800 py-2.5">{form[key]}</p>
+                <p className="text-sm font-semibold text-navy-800 mt-1">{form[key] || "—"}</p>
               )}
             </div>
           ))}

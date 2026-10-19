@@ -7,6 +7,7 @@ import PageHeader from "../../components/PageHeader";
 import DashboardCard from "../../components/DashboardCard";
 import EmptyState from "../../components/EmptyState";
 import { TrendLineChart } from "../../components/StatChart";
+import { useAuth } from "../../context/AuthContext";
 import { currentFaculty, attendanceTrend, subjects as subjectsMaster } from "../../data/mockData";
 import { usePersistentState } from "../../hooks/usePersistentState";
 
@@ -23,6 +24,9 @@ const quickActions = [
 ];
 
 export default function FacultyDashboard() {
+  const { user } = useAuth();
+  const faculty = user || currentFaculty;
+
   const [allAssessments] = usePersistentState("assessments");
   const [allAssignments] = usePersistentState("assignments");
   const [allFeedback] = usePersistentState("feedback");
@@ -30,12 +34,12 @@ export default function FacultyDashboard() {
   const [studentsList] = usePersistentState("students");
   const [notifications] = usePersistentState("notifications");
 
-  const mySubjectNames = currentFaculty.subjects || [];
+  const mySubjectNames = faculty.subjects || currentFaculty.subjects || [];
   const todayISO = new Date().toISOString().slice(0, 10);
-  const mySessions = qrSessions.filter((s) => s.faculty === currentFaculty.name && s.date === todayISO);
+  const mySessions = qrSessions.filter((s) => s.faculty === faculty.name && s.date === todayISO);
   const myAssessments = allAssessments.filter((a) => mySubjectNames.includes(a.subject));
   const myAssignments = allAssignments.filter((a) => mySubjectNames.includes(a.subject));
-  const myFeedback = allFeedback.filter((f) => f.facultyId === currentFaculty.id || (!f.facultyId && mySubjectNames.includes(f.subjectName)));
+  const myFeedback = allFeedback.filter((f) => f.facultyId === faculty.id || (!f.facultyId && mySubjectNames.includes(f.subjectName)));
   const myNotifications = notifications.filter((n) => n.postedBy !== "faculty").slice(0, 4);
 
   const pendingAssessments = myAssessments.filter((a) => a.status !== "Published");
@@ -58,7 +62,7 @@ export default function FacultyDashboard() {
 
   return (
     <div>
-      <PageHeader title={`Welcome, ${currentFaculty.name}`} subtitle={`${currentFaculty.designation} · ${currentFaculty.department}`} />
+      <PageHeader title={`Welcome, ${faculty.name || "Faculty"}`} subtitle={`${faculty.designation || "Assistant Professor"} · ${faculty.department || "Department"}`} />
 
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
         <DashboardCard icon={Users} label="Assigned Students" value={assignedStudents} tone="navy" />
