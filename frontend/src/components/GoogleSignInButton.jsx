@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Loader2, GraduationCap, Users, Shield } from "lucide-react";
 import { signInWithGoogle, isFirebaseConfigured } from "../services/firebase";
 import { useAuth } from "../context/AuthContext";
-import { useToast } from "../../context/ToastContext";
+import { useToast } from "../context/ToastContext";
 
 function checkExistingUser(email) {
   try {

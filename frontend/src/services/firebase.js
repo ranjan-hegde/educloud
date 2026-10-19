@@ -1,7 +1,4 @@
 // Firebase configuration & Google Authentication
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
-
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyCRSmgpTycIxr0t20OF-aCvzzqtNRV76B0",
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "educloud-d1ad6.firebaseapp.com",
@@ -17,19 +14,28 @@ export const isFirebaseConfigured = Boolean(
   firebaseConfig.authDomain
 );
 
-let app = null;
-let auth = null;
-let googleProvider = null;
+let firebaseModule = null;
 
-if (isFirebaseConfigured) {
+async function loadFirebase() {
+  if (firebaseModule) return firebaseModule;
   try {
-    app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-    auth = getAuth(app);
-    googleProvider = new GoogleAuthProvider();
+    const { initializeApp, getApps, getApp } = await import(/* @vite-ignore */ "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js");
+    const { getAuth, GoogleAuthProvider, signInWithPopup, signOut } = await import(/* @vite-ignore */ "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js");
+    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+    const auth = getAuth(app);
+    const googleProvider = new GoogleAuthProvider();
     googleProvider.setCustomParameters({ prompt: "select_account" });
+    firebaseModule = { app, auth, googleProvider, signInWithPopup, signOut };
+    return firebaseModule;
   } catch (err) {
-    console.warn("Firebase initialization failed:", err);
+    console.warn("Firebase CDN initialization failed:", err);
+    return null;
   }
+}
+
+// Preload if in browser environment
+if (typeof window !== "undefined" && isFirebaseConfigured) {
+  loadFirebase().catch(() => {});
 }
 
 /**
@@ -37,13 +43,18 @@ if (isFirebaseConfigured) {
  * Returns an object with { name, email, avatar, uid, idToken }
  */
 export async function signInWithGoogle() {
-  if (!isFirebaseConfigured || !auth) {
+  if (!isFirebaseConfigured) {
     throw new Error(
-      "FIREBASE_NOT_CONFIGURED: Please configure your Firebase credentials in .env (VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, etc.)"
+      "FIREBASE_NOT_CONFIGURED: Please configure your Firebase credentials."
     );
   }
 
-  const result = await signInWithPopup(auth, googleProvider);
+  const fb = await loadFirebase();
+  if (!fb || !fb.auth) {
+    throw new Error("FIREBASE_NOT_CONFIGURED: Unable to load Firebase auth service.");
+  }
+
+  const result = await fb.signInWithPopup(fb.auth, fb.googleProvider);
   const user = result.user;
   const idToken = await user.getIdToken();
 
@@ -57,13 +68,12 @@ export async function signInWithGoogle() {
 }
 
 export async function signOutGoogle() {
-  if (auth) {
+  const fb = await loadFirebase();
+  if (fb?.auth) {
     try {
-      await signOut(auth);
+      await fb.signOut(fb.auth);
     } catch {
       // ignore
     }
   }
 }
-
-export { auth, googleProvider };
