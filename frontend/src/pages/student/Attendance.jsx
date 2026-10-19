@@ -16,10 +16,10 @@ export default function StudentAttendance() {
       <PageHeader title="Attendance" subtitle="Track your overall and subject-wise attendance" />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <DashboardCard icon={CalendarCheck} label="Overall Attendance" value={`${attendanceSummary.overall}%`} tone="teal" />
-        <DashboardCard icon={ListChecks} label="Present Days" value={attendanceSummary.present} tone="navy" />
-        <DashboardCard icon={CalendarX} label="Absent Days" value={attendanceSummary.absent} tone="coral" />
-        <DashboardCard icon={CalendarCheck} label="Total Classes" value={attendanceSummary.total} tone="amber" />
+        <DashboardCard icon={CalendarCheck} label="Overall Attendance" value={`${attendanceSummary?.overall ?? 0}%`} tone="teal" />
+        <DashboardCard icon={ListChecks} label="Present Days" value={attendanceSummary?.present ?? 0} tone="navy" />
+        <DashboardCard icon={CalendarX} label="Absent Days" value={attendanceSummary?.absent ?? 0} tone="coral" />
+        <DashboardCard icon={CalendarCheck} label="Total Classes" value={attendanceSummary?.total ?? 0} tone="amber" />
       </div>
 
       <div className="card p-5 mb-6">
@@ -31,7 +31,7 @@ export default function StudentAttendance() {
         <p className="font-semibold text-navy-900 mb-4">Subject-wise Attendance</p>
         <DataTable
           columns={["Subject", "Total Classes", "Present", "Absent", "Attendance"]}
-          data={subjectAttendance}
+          data={Array.isArray(subjectAttendance) ? subjectAttendance : []}
           renderRow={(r) => (
             <>
               <td className="px-3 py-3 font-medium text-navy-800">{r.subject}</td>

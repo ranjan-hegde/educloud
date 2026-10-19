@@ -15,7 +15,7 @@ export default function StudentAssignments() {
 
   function openSubmit(a) { setSelected(a); setModalOpen(true); }
   function handleSubmit() {
-    setItems((prev) => prev.map((a) => (a.id === selected.id ? { ...a, status: "Submitted", submissions: a.submissions + 1 } : a)));
+    setItems((prev) => (prev || []).map((a) => (a.id === selected.id ? { ...a, status: "Submitted", submissions: (a.submissions || 0) + 1 } : a)));
     setModalOpen(false);
     toast.success(`Submission received for "${selected.title}".`);
   }
@@ -26,7 +26,7 @@ export default function StudentAssignments() {
       <div className="card p-5">
         <DataTable
           columns={["Title", "Subject", "Due Date", "Status", "Action"]}
-          data={items}
+          data={Array.isArray(items) ? items : []}
           renderRow={(a) => (
             <>
               <td className="px-3 py-3 font-medium text-navy-800">{a.title}</td>

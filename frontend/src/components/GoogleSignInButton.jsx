@@ -1,12 +1,23 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { Loader2, GraduationCap, Users, Shield } from "lucide-react";
 import { signInWithGoogle, isFirebaseConfigured } from "../services/firebase";
 import { useAuth } from "../context/AuthContext";
-import { useToast } from "../context/ToastContext";
+import { useToast } from "../../context/ToastContext";
+
+function checkExistingUser(email) {
+  try {
+    const registered = JSON.parse(localStorage.getItem("educloud_registered_users")) || {};
+    return registered[email.trim().toLowerCase()] || null;
+  } catch {
+    return null;
+  }
+}
 
 export default function GoogleSignInButton({ role, text = "Continue with Google" }) {
   const [loading, setLoading] = useState(false);
+  const [showRoleModal, setShowRoleModal] = useState(false);
+  const [pendingGoogleUser, setPendingGoogleUser] = useState(null);
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [demoGoogleUser, setDemoGoogleUser] = useState({ name: "", email: "" });
   const { loginWithGoogle } = useAuth();
@@ -14,8 +25,6 @@ export default function GoogleSignInButton({ role, text = "Continue with Google"
   const navigate = useNavigate();
 
   async function handleGoogleClick() {
-    const selectedRole = role || "student";
-
     if (!isFirebaseConfigured) {
       setShowConfigModal(true);
       return;
@@ -24,9 +33,22 @@ export default function GoogleSignInButton({ role, text = "Continue with Google"
     setLoading(true);
     try {
       const googleUser = await signInWithGoogle();
-      const user = await loginWithGoogle({ googleUser, role: selectedRole });
-      toast.success(`Welcome, ${user.name}!`);
-      navigate(`/${user.role}/dashboard`, { replace: true });
+      const existingAccount = checkExistingUser(googleUser.email);
+
+      // If already registered OR role was pre-selected, proceed directly!
+      if (existingAccount || role) {
+        const user = await loginWithGoogle({
+          googleUser,
+          role: existingAccount?.profile?.role || role || "student",
+          remember: true,
+        });
+        toast.success(`Welcome, ${user.name}!`);
+        navigate(`/${user.role}/dashboard`, { replace: true });
+      } else {
+        // Brand new user without pre-selected role: ask them for role!
+        setPendingGoogleUser(googleUser);
+        setShowRoleModal(true);
+      }
     } catch (err) {
       if (err.message?.includes("FIREBASE_NOT_CONFIGURED")) {
         setShowConfigModal(true);
@@ -40,6 +62,25 @@ export default function GoogleSignInButton({ role, text = "Continue with Google"
     }
   }
 
+  async function completeGoogleWithRole(chosenRole) {
+    if (!pendingGoogleUser) return;
+    setLoading(true);
+    try {
+      const user = await loginWithGoogle({
+        googleUser: pendingGoogleUser,
+        role: chosenRole,
+        remember: true,
+      });
+      setShowRoleModal(false);
+      toast.success(`Account created! Welcome to EduCloud, ${user.name}!`);
+      navigate(`/${user.role}/dashboard`, { replace: true });
+    } catch (err) {
+      toast.error(err.message || "Failed to complete account registration.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function handleDemoSubmit(e) {
     e.preventDefault();
     if (!demoGoogleUser.email || !demoGoogleUser.name) {
@@ -48,18 +89,28 @@ export default function GoogleSignInButton({ role, text = "Continue with Google"
     }
     setLoading(true);
     try {
-      const user = await loginWithGoogle({
-        googleUser: {
-          name: demoGoogleUser.name.trim(),
-          email: demoGoogleUser.email.trim(),
-          avatar: demoGoogleUser.name.slice(0, 2).toUpperCase(),
-          uid: `goog_${Date.now()}`,
-        },
-        role: role || "student",
-      });
-      setShowConfigModal(false);
-      toast.success(`Welcome, ${user.name}!`);
-      navigate(`/${user.role}/dashboard`, { replace: true });
+      const gUser = {
+        name: demoGoogleUser.name.trim(),
+        email: demoGoogleUser.email.trim(),
+        avatar: demoGoogleUser.name.slice(0, 2).toUpperCase(),
+        uid: `goog_${Date.now()}`,
+      };
+      const existingAccount = checkExistingUser(gUser.email);
+
+      if (existingAccount || role) {
+        const user = await loginWithGoogle({
+          googleUser: gUser,
+          role: existingAccount?.profile?.role || role || "student",
+          remember: true,
+        });
+        setShowConfigModal(false);
+        toast.success(`Welcome, ${user.name}!`);
+        navigate(`/${user.role}/dashboard`, { replace: true });
+      } else {
+        setShowConfigModal(false);
+        setPendingGoogleUser(gUser);
+        setShowRoleModal(true);
+      }
     } catch (err) {
       toast.error(err.message || "Sign in failed.");
     } finally {
@@ -73,7 +124,7 @@ export default function GoogleSignInButton({ role, text = "Continue with Google"
         type="button"
         disabled={loading}
         onClick={handleGoogleClick}
-        className="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl border border-surface-border bg-white hover:bg-navy-50 text-navy-800 font-semibold text-sm transition-all shadow-sm hover:shadow"
+        className="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl border border-slate-200/90 bg-white/90 backdrop-blur-md hover:bg-white text-navy-900 font-semibold text-sm transition-all shadow-sm hover:shadow active:scale-[0.99]"
       >
         {loading ? (
           <Loader2 size={18} className="animate-spin text-navy-600" />
@@ -100,19 +151,77 @@ export default function GoogleSignInButton({ role, text = "Continue with Google"
         <span>{text}</span>
       </button>
 
-      {/* Helper Modal when Firebase keys are pending */}
+      {/* Role Picker Modal for New Google Users */}
+      {showRoleModal && pendingGoogleUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy-950/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white/95 backdrop-blur-2xl rounded-3xl max-w-sm w-full p-6 shadow-glass-lg border border-white/80 text-center">
+            <div className="h-12 w-12 rounded-2xl bg-teal-50 text-accent-teal flex items-center justify-center mx-auto mb-3">
+              <GraduationCap size={26} />
+            </div>
+            <h3 className="text-xl font-display font-bold text-navy-950">One last step!</h3>
+            <p className="text-xs text-slate-500 mt-1 mb-5">
+              Welcome, <span className="font-semibold text-navy-800">{pendingGoogleUser.name}</span>. Select your campus role to complete your profile:
+            </p>
+
+            <div className="space-y-2.5">
+              <button
+                type="button"
+                onClick={() => completeGoogleWithRole("student")}
+                className="w-full p-3 rounded-2xl border border-slate-200/90 hover:border-accent-teal hover:bg-teal-50/50 flex items-center gap-3 transition-all text-left"
+              >
+                <div className="p-2 rounded-xl bg-teal-500/10 text-teal-700">
+                  <GraduationCap size={18} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-navy-900">I am a Student</p>
+                  <p className="text-[11px] text-slate-500">Access classes, attendance, grades and assignments</p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => completeGoogleWithRole("faculty")}
+                className="w-full p-3 rounded-2xl border border-slate-200/90 hover:border-accent-teal hover:bg-teal-50/50 flex items-center gap-3 transition-all text-left"
+              >
+                <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-700">
+                  <Users size={18} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-navy-900">I am a Faculty Member</p>
+                  <p className="text-[11px] text-slate-500">Manage courses, mark attendance, and evaluate students</p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => completeGoogleWithRole("admin")}
+                className="w-full p-3 rounded-2xl border border-slate-200/90 hover:border-accent-teal hover:bg-teal-50/50 flex items-center gap-3 transition-all text-left"
+              >
+                <div className="p-2 rounded-xl bg-slate-500/10 text-slate-700">
+                  <Shield size={18} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-navy-900">Institution Administrator</p>
+                  <p className="text-[11px] text-slate-500">Campus-wide control and reports</p>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Helper Modal when Firebase keys are pending in environment */}
       {showConfigModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-surface-border">
-            <h3 className="text-lg font-bold text-navy-900 mb-2">Google Sign-In Setup</h3>
-            <p className="text-xs text-navy-500 mb-4">
-              Firebase credentials are not set in your <code className="bg-navy-50 px-1 py-0.5 rounded text-navy-800">.env</code> yet.
-              You can test Google sign-in right now by typing your details, or paste your Firebase config.
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy-950/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white/95 backdrop-blur-2xl rounded-3xl max-w-md w-full p-6 shadow-glass-lg border border-white/80">
+            <h3 className="text-lg font-bold text-navy-950 mb-1">Direct Google Profile Sign-In</h3>
+            <p className="text-xs text-slate-500 mb-4">
+              Enter your name and email to test your Google authentication flow.
             </p>
 
             <form onSubmit={handleDemoSubmit} className="space-y-3">
               <div>
-                <label className="text-xs font-semibold text-navy-700">Your Full Name</label>
+                <label className="text-xs font-semibold text-slate-600">Your Full Name</label>
                 <input
                   type="text"
                   required
@@ -124,7 +233,7 @@ export default function GoogleSignInButton({ role, text = "Continue with Google"
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-navy-700">Google Email</label>
+                <label className="text-xs font-semibold text-slate-600">Google Email</label>
                 <input
                   type="email"
                   required
@@ -148,7 +257,7 @@ export default function GoogleSignInButton({ role, text = "Continue with Google"
                   disabled={loading}
                   className="btn-primary flex-1 !py-2 text-xs"
                 >
-                  {loading ? "Signing in..." : "Continue as Google User"}
+                  {loading ? "Signing in..." : "Continue"}
                 </button>
               </div>
             </form>

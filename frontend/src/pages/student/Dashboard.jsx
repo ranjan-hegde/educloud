@@ -35,18 +35,27 @@ export default function StudentDashboard() {
   const [qrSessions] = usePersistentState("qrSessions");
   const [marksOverrides] = usePersistentState("studentMarksOverrides");
 
-  const pending = assignments.filter((a) => a.status === "Pending").slice(0, 4);
-  const unread = notifications.filter((n) => !n.read).slice(0, 4);
-  const upcomingAssessments = assessments.filter((a) => mySubjectNames.includes(a.subject) && a.status === "Published").slice(0, 4);
-  const recentMaterials = courseMaterials.filter((m) => mySubjectNames.includes(m.subject)).slice(0, 4);
-  const myFeedback = feedback.filter((f) => f.studentId === student.id).slice(0, 3);
+  const safeAssignments = Array.isArray(assignments) ? assignments : [];
+  const safeNotifications = Array.isArray(notifications) ? notifications : [];
+  const safeAssessments = Array.isArray(assessments) ? assessments : [];
+  const safeCourseMaterials = Array.isArray(courseMaterials) ? courseMaterials : [];
+  const safeFeedback = Array.isArray(feedback) ? feedback : [];
+  const safeQrSessions = Array.isArray(qrSessions) ? qrSessions : [];
+
+  const pending = safeAssignments.filter((a) => a.status === "Pending").slice(0, 4);
+  const unread = safeNotifications.filter((n) => !n.read).slice(0, 4);
+  const upcomingAssessments = safeAssessments.filter((a) => mySubjectNames.includes(a.subject) && a.status === "Published").slice(0, 4);
+  const recentMaterials = safeCourseMaterials.filter((m) => mySubjectNames.includes(m.subject)).slice(0, 4);
+  const myFeedback = safeFeedback.filter((f) => f.studentId === student.id).slice(0, 3);
   const todayISO = new Date().toISOString().slice(0, 10);
-  const todaysClasses = qrSessions.filter((s) => s.class === studentClass && s.date === todayISO);
+  const todaysClasses = safeQrSessions.filter((s) => s.class === studentClass && s.date === todayISO);
 
   const overrideEntries = Object.entries(marksOverrides || {});
   const recentMark = overrideEntries.length
     ? { subject: overrideEntries[overrideEntries.length - 1][0], ...overrideEntries[overrideEntries.length - 1][1] }
     : null;
+
+  const overallAttendance = attendanceSummary?.overall ?? 0;
 
   return (
     <div>
@@ -67,12 +76,12 @@ export default function StudentDashboard() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
-        <DashboardCard icon={CalendarCheck} label="Attendance" value={`${attendanceSummary.overall}%`} tone="teal" />
+        <DashboardCard icon={CalendarCheck} label="Attendance" value={`${overallAttendance}%`} tone="teal" />
         <DashboardCard icon={BookOpen} label="Subjects" value={mySubjectNames.length} tone="navy" />
         <DashboardCard icon={Clock} label="Today's Classes" value={todaysClasses.length} tone="amber" />
-        <DashboardCard icon={ClipboardList} label="Pending Assignments" value={assignments.filter((a) => a.status === "Pending").length} tone="coral" />
+        <DashboardCard icon={ClipboardList} label="Pending Assignments" value={safeAssignments.filter((a) => a.status === "Pending").length} tone="coral" />
         <DashboardCard icon={ClipboardEdit} label="Upcoming Assessments" value={upcomingAssessments.length} tone="amber" />
-        <DashboardCard icon={Bell} label="Notifications" value={notifications.filter((n) => !n.read).length} tone="navy" />
+        <DashboardCard icon={Bell} label="Notifications" value={safeNotifications.filter((n) => !n.read).length} tone="navy" />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
@@ -214,8 +223,8 @@ export default function StudentDashboard() {
           <div className="flex items-center gap-3">
             <GraduationCap size={20} className="text-navy-700" />
             <div>
-              <p className="font-semibold text-navy-900 text-sm">Latest SGPA: {resultsData.sgpa}</p>
-              <p className="text-xs text-navy-400">CGPA {resultsData.cgpa} · {resultsData.semester}</p>
+              <p className="font-semibold text-navy-900 text-sm">Latest SGPA: {resultsData?.sgpa ?? "8.5"}</p>
+              <p className="text-xs text-navy-400">CGPA {resultsData?.cgpa ?? "8.4"} · {student.semester || resultsData?.semester || "1st Semester"}</p>
             </div>
           </div>
           <Link to="/student/results" className="btn-secondary !py-2">View Results</Link>

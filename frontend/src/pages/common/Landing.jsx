@@ -32,28 +32,40 @@ const benefits = [
   "Scales from a single department to an entire university",
 ];
 
+import { useAuth } from "../../context/AuthContext";
+
 export default function Landing() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { user } = useAuth();
 
   return (
-    <div className="bg-white">
-      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-surface-border">
+    <div className="bg-transparent">
+      <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-white/60 shadow-xs">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-navy-800 flex items-center justify-center font-display font-bold text-white">E</div>
-            <span className="font-display font-semibold text-navy-900 text-lg">EduCloud</span>
+          <Link to="/" className="flex items-center gap-2.5">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-tr from-accent-teal to-teal-400 flex items-center justify-center font-display font-bold text-navy-950 shadow-sm">E</div>
+            <span className="font-display font-semibold text-navy-900 text-lg tracking-tight">EduCloud</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-navy-600">
-            <a href="#home" className="hover:text-navy-900">Home</a>
-            <a href="#about" className="hover:text-navy-900">About</a>
-            <a href="#features" className="hover:text-navy-900">Features</a>
-            <a href="#contact" className="hover:text-navy-900">Contact</a>
+            <a href="#home" className="hover:text-navy-950 transition-colors">Home</a>
+            <a href="#about" className="hover:text-navy-950 transition-colors">About</a>
+            <a href="#features" className="hover:text-navy-950 transition-colors">Features</a>
+            <a href="#contact" className="hover:text-navy-950 transition-colors">Contact</a>
           </nav>
 
           <div className="hidden md:flex items-center gap-3">
-            <Link to="/login" className="btn-outline !py-2">Login</Link>
-            <Link to="/register" className="btn-primary !py-2">Register</Link>
+            {user ? (
+              <Link to={`/${user.role}/dashboard`} className="btn-primary !py-2 flex items-center gap-2">
+                <span>Go to Dashboard ({user.name.split(" ")[0]})</span>
+                <ArrowRight size={14} />
+              </Link>
+            ) : (
+              <>
+                <Link to="/login" className="btn-outline !py-2">Login</Link>
+                <Link to="/register" className="btn-primary !py-2">Register</Link>
+              </>
+            )}
           </div>
 
           <button className="md:hidden text-navy-700" onClick={() => setMenuOpen((o) => !o)}>

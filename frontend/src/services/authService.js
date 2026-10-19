@@ -37,10 +37,6 @@ function findAccount(email) {
  * Attempts real backend POST /api/auth/login first; falls back gracefully if backend is waking up.
  */
 export async function login({ email, password, role }) {
-  if (!role) {
-    return mockError("Please select your role.");
-  }
-
   // 1. Attempt Real Backend API
   try {
     const res = await api("/api/auth/login", {
@@ -56,7 +52,7 @@ export async function login({ email, password, role }) {
       localStorage.setItem("educloud_token", authData.token);
 
       const serverUser = authData.user || {};
-      const userRole = (serverUser.role || role).toLowerCase();
+      const userRole = (serverUser.role || role || "student").toLowerCase();
 
       // Enrich with detailed role profile if student or faculty
       let detailedProfile = {};
@@ -104,9 +100,9 @@ export async function login({ email, password, role }) {
   if (account.password !== password) {
     return mockError("Incorrect password.");
   }
-  if (account.profile.role !== role) {
+  if (role && account.profile.role !== role) {
     const label = role.charAt(0).toUpperCase() + role.slice(1);
-    return mockError(`This account is not registered as a ${label}.`);
+    return mockError(`This account is registered as ${account.profile.role}, not ${label}.`);
   }
 
   return delay({ token: "local-token-" + Date.now(), user: account.profile }, 500);

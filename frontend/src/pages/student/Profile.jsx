@@ -21,7 +21,23 @@ export default function StudentProfile() {
 
   useEffect(() => {
     if (user) {
-      setForm((prev) => ({ ...currentStudent, ...prev, ...user }));
+      const isDemo = user.email === "student@example.com";
+      const baseDefaults = isDemo ? currentStudent : {
+        name: user.name,
+        email: user.email,
+        phone: user.phone || "",
+        department: user.department || "Computer Applications",
+        course: user.course || "BCA",
+        semester: user.semester || "1st Semester",
+        academicYear: "2026 - 2027",
+        rollNo: user.rollNo || user.id || "STU2601",
+        dob: "",
+        bloodGroup: "",
+        guardianName: "",
+        guardianPhone: "",
+        address: "",
+      };
+      setForm((prev) => ({ ...baseDefaults, ...prev, ...user }));
     }
   }, [user]);
 

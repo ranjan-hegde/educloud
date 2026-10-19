@@ -4,8 +4,10 @@ import { usePersistentState } from "../../hooks/usePersistentState";
 
 export default function StudentTimetable() {
   const [timetable] = usePersistentState("timetable");
-  const days = Object.keys(timetable);
-  const [activeDay, setActiveDay] = useState(days[0]);
+  const days = Object.keys(timetable || {});
+  const [activeDay, setActiveDay] = useState(days[0] || "Monday");
+  const currentDayClasses = timetable && activeDay ? (timetable[activeDay] || []) : [];
+
   return (
     <div>
       <PageHeader title="Timetable" subtitle="Your weekly class schedule" />
@@ -23,7 +25,7 @@ export default function StudentTimetable() {
       </div>
 
       <div className="space-y-3">
-        {timetable[activeDay].map((cls, i) => (
+        {currentDayClasses.map((cls, i) => (
           <div key={i} className="card p-4 flex items-center justify-between">
             <div>
               <p className="font-semibold text-navy-900">{cls.subject}</p>
@@ -32,7 +34,7 @@ export default function StudentTimetable() {
             <span className="badge-blue">{cls.time}</span>
           </div>
         ))}
-        {timetable[activeDay].length === 0 && <p className="text-sm text-navy-400 text-center py-10">No classes scheduled.</p>}
+        {currentDayClasses.length === 0 && <p className="text-sm text-navy-400 text-center py-10">No classes scheduled.</p>}
       </div>
     </div>
   );

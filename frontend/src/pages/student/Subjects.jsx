@@ -3,12 +3,16 @@ import { BookOpen, User, Award, FileText } from "lucide-react";
 import { subjects, currentStudent } from "../../data/mockData";
 import { usePersistentState } from "../../hooks/usePersistentState";
 
+import { useAuth } from "../../context/AuthContext";
+
 export default function StudentSubjects() {
+  const { user } = useAuth();
+  const student = user || currentStudent;
   const [courseMaterials] = usePersistentState("courseMaterials");
-  const mySubjects = subjects.filter((s) => s.course === currentStudent.course);
+  const mySubjects = subjects.filter((s) => !student.course || s.course === student.course);
   return (
     <div>
-      <PageHeader title="Subjects" subtitle={`Your enrolled subjects for ${currentStudent.semester}`} />
+      <PageHeader title="Subjects" subtitle={`Your enrolled subjects for ${student.course || "BCA"} · ${student.semester || "1st Semester"}`} />
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {mySubjects.map((s) => {
           const materials = courseMaterials.filter((m) => m.subject === s.name);

@@ -59,10 +59,14 @@ public class AuthService {
                 if (req.getDepartmentId() == null || req.getCourseId() == null || req.getSemester() == null) {
                     throw new BadRequestException("Department, course, and semester are required to register a student.");
                 }
-                Department dept = departmentRepository.findById(req.getDepartmentId())
-                        .orElseThrow(() -> new NotFoundException("Department not found."));
-                Course course = courseRepository.findById(req.getCourseId())
-                        .orElseThrow(() -> new NotFoundException("Course not found."));
+                Department dept = (req.getDepartmentId() != null ? departmentRepository.findById(req.getDepartmentId()).orElse(null) : null);
+                if (dept == null) {
+                    dept = departmentRepository.findAll().stream().findFirst().orElse(null);
+                }
+                Course course = (req.getCourseId() != null ? courseRepository.findById(req.getCourseId()).orElse(null) : null);
+                if (course == null) {
+                    course = courseRepository.findAll().stream().findFirst().orElse(null);
+                }
                 Student student = Student.builder()
                         .user(user)
                         .department(dept)

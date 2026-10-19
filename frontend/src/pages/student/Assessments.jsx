@@ -5,10 +5,14 @@ import { ClipboardList } from "lucide-react";
 import { subjects, currentStudent } from "../../data/mockData";
 import { usePersistentState } from "../../hooks/usePersistentState";
 
+import { useAuth } from "../../context/AuthContext";
+
 export default function StudentAssessments() {
+  const { user } = useAuth();
+  const student = user || currentStudent;
   const [allAssessments] = usePersistentState("assessments");
-  const mySubjectNames = subjects.filter((s) => s.course === currentStudent.course).map((s) => s.name);
-  const items = allAssessments.filter((a) => mySubjectNames.includes(a.subject) && a.status === "Published");
+  const mySubjectNames = subjects.filter((s) => !student.course || s.course === student.course).map((s) => s.name);
+  const items = (allAssessments || []).filter((a) => mySubjectNames.includes(a.subject) && a.status === "Published");
 
   return (
     <div>

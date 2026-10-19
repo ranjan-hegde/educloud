@@ -10,19 +10,24 @@ import { useToast } from "../../context/ToastContext";
 import { usePersistentState } from "../../hooks/usePersistentState";
 import { nextId } from "../../utils/idGenerator";
 
-const mySubjects = subjects.filter((s) => s.course === currentStudent.course);
-const categories = ["Teaching", "Subject", "Class", "Course Material", "Assessment", "Assignment", "Attendance", "General", "Other"];
-const studentClass = `${currentStudent.course} ${currentStudent.semester}`;
+import { useAuth } from "../../context/AuthContext";
 
-function emptyForm() {
-  const first = mySubjects[0];
-  return { subjectId: first?.id || "", category: categories[0], rating: 0, message: "" };
-}
+const categories = ["Teaching", "Subject", "Class", "Course Material", "Assessment", "Assignment", "Attendance", "General", "Other"];
 
 export default function StudentFeedback() {
+  const { user } = useAuth();
+  const student = user || currentStudent;
+  const mySubjects = subjects.filter((s) => !student.course || s.course === student.course);
+  const studentClass = `${student.course || "BCA"} ${student.semester || "1st Semester"}`;
+
+  function emptyForm() {
+    const first = mySubjects[0];
+    return { subjectId: first?.id || "", category: categories[0], rating: 0, message: "" };
+  }
+
   const [allFeedback, setAllFeedback] = usePersistentState("feedback");
   const [facultyList] = usePersistentState("faculty");
-  const mine = allFeedback.filter((f) => f.studentId === currentStudent.id);
+  const mine = (allFeedback || []).filter((f) => f.studentId === student.id || f.studentEmail === student.email);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -30,11 +35,8 @@ export default function StudentFeedback() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const toast = useToast();
 
-  // Resolve the real faculty ID (not just the display name) so Faculty can
-  // reliably match feedback to themselves via ID, the way the rest of the
-  // app already links records.
   function resolveFacultyId(facultyName) {
-    return facultyList.find((f) => f.name === facultyName)?.id || null;
+    return (facultyList || []).find((f) => f.name === facultyName)?.id || null;
   }
 
   function openAdd() { setEditing(null); setForm(emptyForm()); setModalOpen(true); }
@@ -51,7 +53,7 @@ export default function StudentFeedback() {
 
     if (editing) {
       setAllFeedback((prev) =>
-        prev.map((f) =>
+        (prev || []).map((f) =>
           f.id === editing.id
             ? { ...f, subjectId: subject.id, subjectName: subject.name, facultyId, facultyName: subject.faculty, category: form.category, rating: form.rating, message: form.message }
             : f
@@ -61,8 +63,9 @@ export default function StudentFeedback() {
     } else {
       const entry = {
         id: nextId(allFeedback, "FB", { start: 1000 }),
-        studentId: currentStudent.id,
-        studentName: currentStudent.name,
+        studentId: student.id,
+        studentName: student.name,
+        studentEmail: student.email,
         classId: studentClass,
         subjectId: subject.id,
         subjectName: subject.name,
@@ -74,7 +77,7 @@ export default function StudentFeedback() {
         date: new Date().toISOString().slice(0, 10),
         status: "NEW",
       };
-      setAllFeedback((prev) => [entry, ...prev]);
+      setAllFeedback((prev) => [entry, ...(prev || [])]);
       toast.success("Feedback submitted. Your faculty will be able to view it.");
     }
     setModalOpen(false);

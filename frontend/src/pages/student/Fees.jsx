@@ -8,13 +8,15 @@ import Loading from "../../components/Loading";
 import { feeStructure } from "../../data/mockData";
 import { useToast } from "../../context/ToastContext";
 import * as feeService from "../../services/feeService";
+import { usePersistentState } from "../../hooks/usePersistentState";
 
 export default function StudentFees() {
-  const [structure, setStructure] = useState(feeStructure);
+  const [persistentStructure, setPersistentStructure] = usePersistentState("feeStructure");
+  const structure = persistentStructure || feeStructure;
   const [history, setHistory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [payOpen, setPayOpen] = useState(false);
-  const [amount, setAmount] = useState(feeStructure.dueAmount);
+  const [amount, setAmount] = useState(structure.dueAmount);
   const [method, setMethod] = useState("UPI");
   const [paying, setPaying] = useState(false);
   const toast = useToast();
@@ -30,7 +32,10 @@ export default function StudentFees() {
     const res = await feeService.payFee(amount);
     setPaying(false);
     setPayOpen(false);
-    setStructure((s) => ({ ...s, paidAmount: s.paidAmount + amount, dueAmount: s.dueAmount - amount }));
+    setPersistentStructure((s) => {
+      const base = s || feeStructure;
+      return { ...base, paidAmount: (base.paidAmount || 0) + amount, dueAmount: Math.max(0, (base.dueAmount || 0) - amount) };
+    });
     setHistory((h) => [
       { id: res.receiptId, date: res.date, description: `${structure.semester} — Payment`, amount, mode: `Online (${method})`, status: "Paid" },
       ...h,

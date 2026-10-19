@@ -13,7 +13,7 @@ import * as qrAttendanceService from "../../services/qrAttendanceService";
 import { useToast } from "../../context/ToastContext";
 import { usePersistentState } from "../../hooks/usePersistentState";
 
-const studentClass = `${currentStudent.course} ${currentStudent.semester}`;
+import { useAuth } from "../../context/AuthContext";
 
 function statusFor(pct) {
   if (pct >= 90) return "Excellent";
@@ -27,6 +27,10 @@ function todayISO() {
 }
 
 export default function StudentQRAttendance() {
+  const { user } = useAuth();
+  const student = user || currentStudent;
+  const studentClass = `${student.course || "BCA"} ${student.semester || "1st Semester"}`;
+
   // The Faculty/Admin-controlled sessions ARE the single source of truth —
   // the student view reads the exact same shared "qrSessions" collection,
   // filtered to the student's own class.
@@ -35,8 +39,8 @@ export default function StudentQRAttendance() {
   const [attendanceSummary, setAttendanceSummary] = usePersistentState("attendanceSummary");
   const [subjectAttendance, setSubjectAttendance] = usePersistentState("subjectAttendance");
 
-  const mySessions = qrSessions.filter((s) => s.class === studentClass);
-  const myMarks = marks.filter((m) => m.studentId === currentStudent.id);
+  const mySessions = (qrSessions || []).filter((s) => s.class === studentClass);
+  const myMarks = (marks || []).filter((m) => m.studentId === student.id || m.studentEmail === student.email);
 
   const [selectedId, setSelectedId] = useState(mySessions.find((s) => s.status === "ACTIVE")?.id || mySessions[0]?.id);
   const [status, setStatus] = useState("idle"); // idle | checking | done
@@ -97,8 +101,9 @@ export default function StudentQRAttendance() {
         {
           id: `MRK${Date.now()}`,
           sessionId: res.session.id,
-          studentId: currentStudent.id,
-          studentName: currentStudent.name,
+          studentId: student.id,
+          studentName: student.name,
+          studentEmail: student.email,
           subject: res.session.subject,
           date: res.session.date,
           time: scanTime,

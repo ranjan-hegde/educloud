@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowRight } from "lucide-react";
 import * as authService from "../../services/authService";
+import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import GoogleSignInButton from "../../components/GoogleSignInButton";
 
@@ -10,11 +11,20 @@ const courses = ["BCA", "B.Sc Computer Science", "B.Com", "B.Tech ECE"];
 
 export default function Register() {
   const [form, setForm] = useState({
-    fullName: "", email: "", phone: "", password: "", confirmPassword: "",
-    role: "student", studentId: "", department: "", course: "", semester: "",
+    fullName: "",
+    email: "",
+    phone: "",
+    password: "",
+    confirmPassword: "",
+    role: "student",
+    studentId: "",
+    department: "Computer Applications",
+    course: "BCA",
+    semester: "1",
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
 
@@ -24,14 +34,10 @@ export default function Register() {
 
   function validate() {
     const errs = {};
-    if (!form.fullName) errs.fullName = "Full name is required.";
+    if (!form.fullName.trim()) errs.fullName = "Full name is required.";
     if (!/\S+@\S+\.\S+/.test(form.email)) errs.email = "Enter a valid email address.";
-    if (!/^\+?[0-9\s]{7,15}$/.test(form.phone)) errs.phone = "Enter a valid phone number.";
     if (form.password.length < 6) errs.password = "Password must be at least 6 characters.";
     if (form.confirmPassword !== form.password) errs.confirmPassword = "Passwords do not match.";
-    if (form.role === "student" && !form.studentId) errs.studentId = "Student ID is required.";
-    if (!form.department) errs.department = "Select a department.";
-    if (form.role === "student" && !form.course) errs.course = "Select a course.";
     setErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -40,10 +46,29 @@ export default function Register() {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
+
     try {
-      await authService.register(form);
-      toast.success("Registration successful! You can now log in.");
-      navigate("/login");
+      // Auto-assign student ID if not entered
+      const registrationData = {
+        ...form,
+        studentId: form.studentId.trim() || `STU${Math.floor(2400 + Math.random() * 900)}`,
+        department: form.department || "Computer Applications",
+        course: form.course || "BCA",
+        semester: form.semester || "1",
+      };
+
+      await authService.register(registrationData);
+
+      // Auto login right away — persistent session!
+      const user = await login({
+        email: registrationData.email,
+        password: registrationData.password,
+        role: registrationData.role,
+        remember: true,
+      });
+
+      toast.success(`Account created! Welcome, ${user.name.split(" ")[0]}!`);
+      navigate(`/${user.role}/dashboard`, { replace: true });
     } catch (err) {
       toast.error(err.message || "Registration failed. Please try again.");
     } finally {
@@ -53,109 +78,161 @@ export default function Register() {
 
   return (
     <div className="animate-fade-in">
-      <h1 className="text-2xl font-semibold">Create your account</h1>
-      <p className="text-sm text-navy-400 mt-1.5">Join EduCloud as a student or faculty member.</p>
+      <div className="mb-6">
+        <h1 className="text-2xl sm:text-3xl font-display font-bold text-navy-950">Create account</h1>
+        <p className="text-sm text-slate-500 mt-1">Join EduCloud with your university role and get started.</p>
+      </div>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4" noValidate>
-        <div className="flex gap-2">
-          {["student", "faculty", "admin"].map((role) => (
-            <button
-              type="button"
-              key={role}
-              onClick={() => update("role", role)}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-colors capitalize
-              ${form.role === role ? "bg-navy-800 text-white border-navy-800" : "border-surface-border text-navy-600 hover:bg-navy-50"}`}
-            >
-              {role}
-            </button>
-          ))}
+      {/* Google Sign-in on Register */}
+      <div className="mb-5">
+        <GoogleSignInButton role={form.role} text="Register with Google" />
+      </div>
+
+      <div className="relative my-5">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-slate-200"></div>
         </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-white px-3 text-slate-400 font-medium tracking-wider">or register with details</span>
+        </div>
+      </div>
 
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div>
-            <label className="label">Full name</label>
-            <input className="input" value={form.fullName} onChange={(e) => update("fullName", e.target.value)} placeholder="Jane Doe" />
-            {errors.fullName && <p className="text-xs text-accent-coral mt-1">{errors.fullName}</p>}
-          </div>
-          <div>
-            <label className="label">Phone</label>
-            <input className="input" value={form.phone} onChange={(e) => update("phone", e.target.value)} placeholder="+91 98765 43210" />
-            {errors.phone && <p className="text-xs text-accent-coral mt-1">{errors.phone}</p>}
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+        {/* Role Selector Required on Registration */}
+        <div>
+          <label className="label">Select your institution role</label>
+          <div className="grid grid-cols-3 gap-2">
+            {["student", "faculty", "admin"].map((role) => (
+              <button
+                type="button"
+                key={role}
+                onClick={() => update("role", role)}
+                className={`py-2 px-3 rounded-xl text-xs sm:text-sm font-semibold border transition-all capitalize ${
+                  form.role === role
+                    ? "bg-navy-900 text-white border-navy-900 shadow-sm"
+                    : "bg-white/80 border-slate-200 text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                {role}
+              </button>
+            ))}
           </div>
         </div>
 
         <div>
-          <label className="label">Email address</label>
-          <input type="email" className="input" value={form.email} onChange={(e) => update("email", e.target.value)} placeholder="you@example.com" />
-          {errors.email && <p className="text-xs text-accent-coral mt-1">{errors.email}</p>}
+          <label className="label">Full Name</label>
+          <input
+            className="input"
+            value={form.fullName}
+            onChange={(e) => update("fullName", e.target.value)}
+            placeholder="e.g. Ranjan Hegde"
+          />
+          {errors.fullName && <p className="text-xs text-rose-500 mt-1 font-medium">{errors.fullName}</p>}
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label className="label">Email address</label>
+            <input
+              type="email"
+              className="input"
+              value={form.email}
+              onChange={(e) => update("email", e.target.value)}
+              placeholder="you@example.com"
+            />
+            {errors.email && <p className="text-xs text-rose-500 mt-1 font-medium">{errors.email}</p>}
+          </div>
+          <div>
+            <label className="label">Phone (Optional)</label>
+            <input
+              className="input"
+              value={form.phone}
+              onChange={(e) => update("phone", e.target.value)}
+              placeholder="+91 98765 43210"
+            />
+          </div>
         </div>
 
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <label className="label">Password</label>
-            <input type="password" className="input" value={form.password} onChange={(e) => update("password", e.target.value)} placeholder="••••••••" />
-            {errors.password && <p className="text-xs text-accent-coral mt-1">{errors.password}</p>}
+            <input
+              type="password"
+              className="input"
+              value={form.password}
+              onChange={(e) => update("password", e.target.value)}
+              placeholder="••••••••"
+            />
+            {errors.password && <p className="text-xs text-rose-500 mt-1 font-medium">{errors.password}</p>}
           </div>
           <div>
             <label className="label">Confirm password</label>
-            <input type="password" className="input" value={form.confirmPassword} onChange={(e) => update("confirmPassword", e.target.value)} placeholder="••••••••" />
-            {errors.confirmPassword && <p className="text-xs text-accent-coral mt-1">{errors.confirmPassword}</p>}
+            <input
+              type="password"
+              className="input"
+              value={form.confirmPassword}
+              onChange={(e) => update("confirmPassword", e.target.value)}
+              placeholder="••••••••"
+            />
+            {errors.confirmPassword && <p className="text-xs text-rose-500 mt-1 font-medium">{errors.confirmPassword}</p>}
           </div>
         </div>
 
+        {/* Academic Details for Students */}
         {form.role === "student" && (
-          <div>
-            <label className="label">Student ID</label>
-            <input className="input" value={form.studentId} onChange={(e) => update("studentId", e.target.value)} placeholder="e.g. STU2309" />
-            {errors.studentId && <p className="text-xs text-accent-coral mt-1">{errors.studentId}</p>}
-          </div>
-        )}
-
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div>
-            <label className="label">Department</label>
-            <select className="input" value={form.department} onChange={(e) => update("department", e.target.value)}>
-              <option value="">Select department</option>
-              {departments.map((d) => <option key={d} value={d}>{d}</option>)}
-            </select>
-            {errors.department && <p className="text-xs text-accent-coral mt-1">{errors.department}</p>}
-          </div>
-          {form.role === "student" && (
-            <div>
-              <label className="label">Course</label>
-              <select className="input" value={form.course} onChange={(e) => update("course", e.target.value)}>
-                <option value="">Select course</option>
-                {courses.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-              {errors.course && <p className="text-xs text-accent-coral mt-1">{errors.course}</p>}
+          <div className="p-3.5 rounded-2xl bg-teal-50/50 border border-teal-100/80 space-y-3">
+            <p className="text-xs font-semibold text-teal-900 uppercase tracking-wider">Academic Program</p>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div>
+                <label className="label !text-teal-900">Course</label>
+                <select
+                  className="input !bg-white"
+                  value={form.course}
+                  onChange={(e) => update("course", e.target.value)}
+                >
+                  {courses.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="label !text-teal-900">Current Semester</label>
+                <select
+                  className="input !bg-white"
+                  value={form.semester}
+                  onChange={(e) => update("semester", e.target.value)}
+                >
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
+                    <option key={s} value={s}>{s}st/nd/th Semester</option>
+                  ))}
+                </select>
+              </div>
             </div>
-          )}
-        </div>
-
-        {form.role === "student" && (
-          <div>
-            <label className="label">Semester</label>
-            <select className="input" value={form.semester} onChange={(e) => update("semester", e.target.value)}>
-              <option value="">Select semester</option>
-              {[1,2,3,4,5,6,7,8].map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
           </div>
         )}
 
-        <button type="submit" disabled={loading} className="btn-primary w-full">
-          {loading ? <><Loader2 size={16} className="animate-spin" /> Creating account...</> : "Create account"}
+        <button
+          type="submit"
+          disabled={loading}
+          className="btn-primary w-full py-3 mt-2 font-semibold shadow-md flex items-center justify-center gap-2 text-base"
+        >
+          {loading ? (
+            <>
+              <Loader2 size={18} className="animate-spin" /> Creating your profile...
+            </>
+          ) : (
+            <>
+              Complete Registration <ArrowRight size={17} />
+            </>
+          )}
         </button>
-
-        <div className="relative my-4">
-          <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-surface-border"></div></div>
-          <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-navy-400 font-medium">Or continue with</span></div>
-        </div>
-
-        <GoogleSignInButton role={form.role} text="Register with Google" />
       </form>
 
-      <p className="text-sm text-navy-500 text-center mt-6">
-        Already have an account? <Link to="/login" className="text-navy-800 font-semibold hover:underline">Login</Link>
+      <p className="text-sm text-slate-500 text-center mt-6">
+        Already have an account?{" "}
+        <Link to="/login" className="text-navy-900 font-bold hover:text-accent-teal hover:underline transition-colors">
+          Sign In
+        </Link>
       </p>
     </div>
   );

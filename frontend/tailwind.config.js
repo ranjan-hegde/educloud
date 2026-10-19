@@ -24,8 +24,8 @@ export default {
         },
         surface: {
           DEFAULT: "#ffffff",
-          muted: "#f6f8fb",
-          border: "#e4e9f2",
+          muted: "#f4f6fb",
+          border: "#e2e8f0",
         },
       },
       fontFamily: {
@@ -33,12 +33,20 @@ export default {
         sans: ["'Inter'", "sans-serif"],
       },
       boxShadow: {
-        card: "0 1px 2px rgba(13, 27, 52, 0.04), 0 4px 16px rgba(13, 27, 52, 0.06)",
-        pop: "0 8px 30px rgba(13, 27, 52, 0.12)",
+        card: "0 1px 3px rgba(13, 27, 52, 0.03), 0 6px 20px rgba(13, 27, 52, 0.05)",
+        pop: "0 10px 35px rgba(13, 27, 52, 0.12)",
+        glass: "0 8px 32px 0 rgba(15, 23, 42, 0.07)",
+        "glass-lg": "0 14px 40px -10px rgba(15, 23, 42, 0.12)",
+        "glow-teal": "0 0 20px -3px rgba(14, 165, 160, 0.35)",
+        "glow-indigo": "0 0 20px -3px rgba(79, 70, 229, 0.35)",
       },
       borderRadius: {
         xl: "0.875rem",
         "2xl": "1.25rem",
+        "3xl": "1.75rem",
+      },
+      backdropBlur: {
+        xs: "2px",
       },
     },
   },

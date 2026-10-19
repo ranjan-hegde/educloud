@@ -86,6 +86,7 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       >
+        <Route index element={<StudentDashboard />} />
         <Route path="dashboard" element={<StudentDashboard />} />
         <Route path="profile" element={<StudentProfile />} />
         <Route path="attendance" element={<StudentAttendance />} />
@@ -111,6 +112,7 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       >
+        <Route index element={<FacultyDashboard />} />
         <Route path="dashboard" element={<FacultyDashboard />} />
         <Route path="profile" element={<FacultyProfile />} />
         <Route path="my-classes" element={<FacultyMyClasses />} />
@@ -142,6 +144,7 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       >
+        <Route index element={<AdminDashboard />} />
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="students" element={<AdminStudents />} />
         <Route path="faculty" element={<AdminFaculty />} />

@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Loader2, ArrowRight } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import GoogleSignInButton from "../../components/GoogleSignInButton";
 
 export default function Login() {
-  const [role, setRole] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -21,8 +20,7 @@ export default function Login() {
 
   function validate() {
     const errs = {};
-    if (!role) errs.role = "Please select your role.";
-    if (!email) errs.email = "Email is required.";
+    if (!email.trim()) errs.email = "Email is required.";
     else if (!/\S+@\S+\.\S+/.test(email)) errs.email = "Enter a valid email address.";
     if (!password) errs.password = "Password is required.";
     setErrors(errs);
@@ -34,7 +32,8 @@ export default function Login() {
     if (!validate()) return;
     setLoading(true);
     try {
-      const user = await login({ email, password, role, remember });
+      // Role is automatically detected from the user's account!
+      const user = await login({ email, password, remember });
       toast.success(`Welcome back, ${user.name.split(" ")[0]}!`);
       const from = location.state?.from || `/${user.role}/dashboard`;
       navigate(from, { replace: true });
@@ -51,99 +50,136 @@ export default function Login() {
       faculty: "faculty@example.com",
       admin: "admin@example.com",
     };
-    setRole(demoRole);
     setEmail(map[demoRole]);
     setPassword("demo1234");
   }
 
   return (
     <div className="animate-fade-in">
-      <h1 className="text-2xl font-semibold">Welcome back</h1>
-      <p className="text-sm text-navy-400 mt-1.5">Sign in to access your EduCloud dashboard.</p>
+      <div className="mb-6">
+        <h1 className="text-2xl sm:text-3xl font-display font-bold text-navy-950">Welcome back</h1>
+        <p className="text-sm text-slate-500 mt-1">Sign in with your email or Google account to access your portal.</p>
+      </div>
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-4" noValidate>
-        <div>
-          <label className="label">Select your role</label>
-          <div className="flex gap-2">
-            {["student", "faculty", "admin"].map((r) => (
-              <button
-                type="button"
-                key={r}
-                onClick={() => setRole(r)}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-colors capitalize
-                ${role === r ? "bg-navy-800 text-white border-navy-800" : "border-surface-border text-navy-600 hover:bg-navy-50"}`}
-              >
-                {r}
-              </button>
-            ))}
-          </div>
-          {errors.role && <p className="text-xs text-accent-coral mt-1">{errors.role}</p>}
+      {/* Google Sign-in */}
+      <div className="mb-5">
+        <GoogleSignInButton text="Continue with Google" />
+      </div>
+
+      <div className="relative my-5">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-slate-200"></div>
         </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-white px-3 text-slate-400 font-medium tracking-wider">or sign in with email</span>
+        </div>
+      </div>
 
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <div>
           <label className="label">Email address</label>
           <div className="relative">
-            <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-navy-300" />
+            <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               className="input pl-10"
+              autoComplete="email"
             />
           </div>
-          {errors.email && <p className="text-xs text-accent-coral mt-1">{errors.email}</p>}
+          {errors.email && <p className="text-xs text-rose-500 mt-1 font-medium">{errors.email}</p>}
         </div>
 
         <div>
           <label className="label">Password</label>
           <div className="relative">
-            <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-navy-300" />
+            <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
               className="input pl-10 pr-10"
+              autoComplete="current-password"
             />
-            <button type="button" onClick={() => setShowPassword((s) => !s)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-navy-300 hover:text-navy-600">
+            <button
+              type="button"
+              onClick={() => setShowPassword((s) => !s)}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-navy-700 transition-colors"
+            >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
-          {errors.password && <p className="text-xs text-accent-coral mt-1">{errors.password}</p>}
+          {errors.password && <p className="text-xs text-rose-500 mt-1 font-medium">{errors.password}</p>}
         </div>
 
-        <div className="flex items-center justify-between text-sm">
-          <label className="flex items-center gap-2 text-navy-600 cursor-pointer select-none">
-            <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="rounded border-navy-300" />
-            Remember me
+        <div className="flex items-center justify-between text-xs sm:text-sm pt-1">
+          <label className="flex items-center gap-2 text-slate-600 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={(e) => setRemember(e.target.checked)}
+              className="rounded border-slate-300 text-navy-800 focus:ring-accent-teal"
+            />
+            <span>Stay logged in</span>
           </label>
-          <Link to="/forgot-password" className="text-navy-700 font-semibold hover:underline">Forgot password?</Link>
+          <Link to="/forgot-password" className="text-navy-700 font-semibold hover:text-accent-teal transition-colors">
+            Forgot password?
+          </Link>
         </div>
 
-        <button type="submit" disabled={loading} className="btn-primary w-full">
-          {loading ? <><Loader2 size={16} className="animate-spin" /> Signing in...</> : "Login"}
+        <button
+          type="submit"
+          disabled={loading}
+          className="btn-primary w-full py-3 mt-2 font-semibold shadow-md flex items-center justify-center gap-2 text-base"
+        >
+          {loading ? (
+            <>
+              <Loader2 size={18} className="animate-spin" /> Signing in...
+            </>
+          ) : (
+            <>
+              Sign In <ArrowRight size={17} />
+            </>
+          )}
         </button>
-
-        <div className="relative my-4">
-          <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-surface-border"></div></div>
-          <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-navy-400 font-medium">Or continue with</span></div>
-        </div>
-
-        <GoogleSignInButton role={role} text="Sign in with Google" />
       </form>
 
-      <div className="mt-6 rounded-xl bg-navy-50 border border-navy-100 p-3.5">
-        <p className="text-xs font-semibold text-navy-600 mb-2">Demo accounts (mock authentication)</p>
-        <div className="flex flex-wrap gap-2">
-          <button onClick={() => fillDemo("student")} className="btn-outline !py-1.5 !px-3 text-xs">Student</button>
-          <button onClick={() => fillDemo("faculty")} className="btn-outline !py-1.5 !px-3 text-xs">Faculty</button>
-          <button onClick={() => fillDemo("admin")} className="btn-outline !py-1.5 !px-3 text-xs">Admin</button>
+      {/* Quick Demo Access Bar */}
+      <div className="mt-6 rounded-2xl bg-slate-50/90 border border-slate-200/80 p-3.5">
+        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Quick Demo Access</p>
+        <div className="grid grid-cols-3 gap-2">
+          <button
+            type="button"
+            onClick={() => fillDemo("student")}
+            className="py-1.5 px-2 rounded-xl text-xs font-semibold bg-white border border-slate-200 hover:border-teal-400 hover:text-teal-700 transition-all shadow-2xs text-center"
+          >
+            Student
+          </button>
+          <button
+            type="button"
+            onClick={() => fillDemo("faculty")}
+            className="py-1.5 px-2 rounded-xl text-xs font-semibold bg-white border border-slate-200 hover:border-teal-400 hover:text-teal-700 transition-all shadow-2xs text-center"
+          >
+            Faculty
+          </button>
+          <button
+            type="button"
+            onClick={() => fillDemo("admin")}
+            className="py-1.5 px-2 rounded-xl text-xs font-semibold bg-white border border-slate-200 hover:border-teal-400 hover:text-teal-700 transition-all shadow-2xs text-center"
+          >
+            Admin
+          </button>
         </div>
       </div>
 
-      <p className="text-sm text-navy-500 text-center mt-6">
-        Don't have an account? <Link to="/register" className="text-navy-800 font-semibold hover:underline">Register</Link>
+      <p className="text-sm text-slate-500 text-center mt-6">
+        Don't have an account?{" "}
+        <Link to="/register" className="text-navy-900 font-bold hover:text-accent-teal hover:underline transition-colors">
+          Create Account
+        </Link>
       </p>
     </div>
   );

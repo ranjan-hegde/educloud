@@ -7,17 +7,15 @@ import EmptyState from "../../components/EmptyState";
 import { currentStudent } from "../../data/mockData";
 import { useToast } from "../../context/ToastContext";
 import { usePersistentState } from "../../hooks/usePersistentState";
-import { isVisibleToStudent } from "../../utils/notificationVisibility";
+import { useAuth } from "../../context/AuthContext";
 
 const categories = ["Academic", "Attendance", "Results", "Assignments", "Announcements"];
 
 export default function StudentNotifications() {
+  const { user } = useAuth();
+  const student = user || currentStudent;
   const [allItems, setItems] = usePersistentState("notifications");
-  // Class-scoped notifications (e.g. "QR Attendance Started") only reach
-  // students in that class; department/course-targeted admin announcements
-  // only reach matching students; general notifications remain visible to
-  // everyone, as before.
-  const items = allItems.filter((n) => isVisibleToStudent(n, currentStudent));
+  const items = (allItems || []).filter((n) => isVisibleToStudent(n, student));
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const toast = useToast();
