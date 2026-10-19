@@ -3,17 +3,17 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyCRSmgpTycIxr0t20OF-aCvzzqtNRV76B0",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "educloud-d1ad6.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "educloud-d1ad6",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "educloud-d1ad6.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "134765578750",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:134765578750:web:6e4a678186816cb11b98af",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-NEWNLQQKW5",
 };
 
 export const isFirebaseConfigured = Boolean(
   firebaseConfig.apiKey &&
-  firebaseConfig.apiKey !== "your-api-key" &&
   firebaseConfig.authDomain
 );
 

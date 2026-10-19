@@ -419,9 +419,9 @@ export async function getBotReply(question, context = {}) {
 
   // 2. Direct client-side Google AI Studio Gemini API if configured
   const clientKey = import.meta.env.VITE_GEMINI_API_KEY;
-  if (clientKey && clientKey !== "your-gemini-api-key") {
+  if (clientKey) {
     try {
-      const model = import.meta.env.VITE_GEMINI_MODEL || "gemini-1.5-flash";
+      const model = import.meta.env.VITE_GEMINI_MODEL || "gemini-2.5-flash";
       const studentName = context.user?.name || currentStudent.name;
       const sysPrompt =
         `You are EduCloud AI, an intelligent, helpful academic assistant for ${studentName}. ` +
