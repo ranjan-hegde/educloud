@@ -6,6 +6,30 @@ import api from "./api";
 import { delay, mockError } from "./_utils";
 import { currentStudent, currentFaculty, currentAdmin } from "../data/mockData";
 import { setCookie, deleteCookie } from "../utils/cookieUtils";
+import * as storageService from "./storageService";
+
+export function syncStudentToRoster(user) {
+  if (!user || user.role !== "student") return;
+  try {
+    const rawId = user.rollNo || user.studentId || user.id || "STU2601";
+    const students = storageService.getData("students") || [];
+    if (!students.some((s) => s.email === user.email || s.id === String(rawId) || s.rollNo === String(rawId))) {
+      storageService.addData("students", {
+        id: String(rawId),
+        rollNo: String(user.rollNo || rawId),
+        name: user.name || "Student",
+        email: user.email,
+        phone: user.phone || "",
+        course: user.course || "BCA",
+        semester: user.semester || "1st Semester",
+        department: user.department || "Computer Applications",
+        attendance: 95,
+      });
+    }
+  } catch {
+    // ignore
+  }
+}
 
 const DEMO_ACCOUNTS = {
   "student@example.com": { password: "demo1234", profile: currentStudent },
@@ -131,6 +155,10 @@ export async function login({ email, password, role }) {
       setCookie("educloud_token", authData.token, 30);
       setCookie("educloud_user", JSON.stringify(fullUser), 30);
 
+      if (userRole === "student") {
+        syncStudentToRoster(fullUser);
+      }
+
       return { token: authData.token, user: fullUser };
     }
   } catch (err) {
@@ -232,6 +260,10 @@ export async function register(formData) {
   registered[key] = { password: formData.password, profile };
   saveRegisteredUsers(registered);
 
+  if (formData.role === "student") {
+    syncStudentToRoster(profile);
+  }
+
   return delay({ success: true, message: "Registration successful. You can now log in.", profile }, 600);
 }
 
@@ -293,6 +325,10 @@ export async function loginWithGoogle({ googleUser, role = "student" }) {
       setCookie("educloud_token", authData.token, 30);
       setCookie("educloud_user", JSON.stringify(fullUser), 30);
 
+      if (userRole === "student") {
+        syncStudentToRoster(fullUser);
+      }
+
       return { token: authData.token, user: fullUser };
     }
   } catch {
@@ -345,6 +381,10 @@ export async function loginWithGoogle({ googleUser, role = "student" }) {
   const token = "google-token-" + Date.now();
   setCookie("educloud_token", token, 30);
   setCookie("educloud_user", JSON.stringify(profile), 30);
+
+  if (role === "student") {
+    syncStudentToRoster(profile);
+  }
 
   return delay({ token, user: profile }, 400);
 }

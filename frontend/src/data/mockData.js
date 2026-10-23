@@ -599,7 +599,30 @@ export const feedbackList = [
 ];
 
 export const requestsList = [
-  { id: "REQ1001", type: "Leave Request", date: "2026-09-05", reason: "Medical appointment", description: "Requesting leave for a half-day medical appointment.", status: "Pending" },
+  {
+    id: "REQ1001",
+    type: "Leave Request",
+    date: "2026-09-05",
+    reason: "Medical appointment",
+    description: "Requesting leave for a half-day medical appointment.",
+    status: "Pending",
+    facultyName: "Dr. Rajesh Sharma",
+    facultyEmail: "faculty@example.com",
+    department: "Computer Science",
+    submittedAt: "2026-09-01",
+  },
+  {
+    id: "REQ1002",
+    type: "Class Replacement Request",
+    date: "2026-09-10",
+    reason: "Conference Presentation",
+    description: "Requesting Prof. Sneha Gupta to take CS301 (Data Structures) lecture at 10:00 AM.",
+    status: "Pending",
+    facultyName: "Dr. Rajesh Sharma",
+    facultyEmail: "faculty@example.com",
+    department: "Computer Science",
+    submittedAt: "2026-09-02",
+  },
 ];
 
 export const facultyTasksList = [

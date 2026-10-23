@@ -1,7 +1,19 @@
 import { Link } from "react-router-dom";
 import {
-  Users, UserCog, BookMarked, Building2, CalendarCheck, QrCode, MessageSquareText, FileClock,
-  Bell, Activity, GraduationCap, BookOpen, Settings, ClipboardList,
+  Users,
+  UserCog,
+  BookMarked,
+  Building2,
+  CalendarCheck,
+  QrCode,
+  MessageSquareText,
+  FileClock,
+  Bell,
+  Activity,
+  GraduationCap,
+  BookOpen,
+  Settings,
+  ClipboardList,
 } from "lucide-react";
 import PageHeader from "../../components/PageHeader";
 import DashboardCard from "../../components/DashboardCard";
@@ -15,6 +27,7 @@ import { usePersistentState } from "../../hooks/usePersistentState";
 const quickActions = [
   { label: "Manage Students", to: "/admin/students", icon: Users },
   { label: "Manage Faculty", to: "/admin/faculty", icon: UserCog },
+  { label: "Faculty Requests", to: "/admin/requests", icon: FileClock },
   { label: "Manage Courses", to: "/admin/courses", icon: BookMarked },
   { label: "Manage Subjects", to: "/admin/subjects", icon: BookOpen },
   { label: "View Attendance", to: "/admin/attendance", icon: CalendarCheck },
@@ -71,7 +84,9 @@ export default function AdminDashboard() {
         <DashboardCard icon={CalendarCheck} label="Today's Attendance" value={`${avgAttendance}%`} tone="teal" />
         <DashboardCard icon={QrCode} label="Active QR Sessions" value={activeSessions.length} tone="coral" />
         <DashboardCard icon={MessageSquareText} label="New Feedback" value={newFeedback.length} tone="coral" />
-        <DashboardCard icon={FileClock} label="Pending Requests" value={pendingRequests.length} tone="amber" />
+        <Link to="/admin/requests" className="block transition-transform hover:-translate-y-0.5" title="Click to view and review requests">
+          <DashboardCard icon={FileClock} label="Pending Requests" value={pendingRequests.length} tone="amber" />
+        </Link>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6 mb-6">

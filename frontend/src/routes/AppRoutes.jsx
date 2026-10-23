@@ -51,6 +51,7 @@ import FacultySettings from "../pages/faculty/Settings";
 import AdminDashboard from "../pages/admin/Dashboard";
 import AdminStudents from "../pages/admin/Students";
 import AdminFaculty from "../pages/admin/Faculty";
+import AdminRequests from "../pages/admin/Requests";
 import AdminDepartments from "../pages/admin/Departments";
 import AdminCourses from "../pages/admin/Courses";
 import AdminSubjects from "../pages/admin/Subjects";
@@ -148,6 +149,7 @@ export default function AppRoutes() {
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="students" element={<AdminStudents />} />
         <Route path="faculty" element={<AdminFaculty />} />
+        <Route path="requests" element={<AdminRequests />} />
         <Route path="departments" element={<AdminDepartments />} />
         <Route path="courses" element={<AdminCourses />} />
         <Route path="subjects" element={<AdminSubjects />} />

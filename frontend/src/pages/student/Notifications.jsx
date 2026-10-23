@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Bell, Trash2, CheckCheck } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Bell, Trash2, CheckCheck, Megaphone, AlertCircle } from "lucide-react";
 import PageHeader from "../../components/PageHeader";
 import SearchBar from "../../components/SearchBar";
 import Filter from "../../components/Filter";
@@ -9,6 +9,7 @@ import { useToast } from "../../context/ToastContext";
 import { usePersistentState } from "../../hooks/usePersistentState";
 import { useAuth } from "../../context/AuthContext";
 import { isVisibleToStudent } from "../../utils/notificationVisibility";
+import * as notificationService from "../../services/notificationService";
 
 const categories = ["Academic", "Attendance", "Results", "Assignments", "Announcements"];
 
@@ -21,20 +22,42 @@ export default function StudentNotifications() {
   const [category, setCategory] = useState("");
   const toast = useToast();
 
+  useEffect(() => {
+    // Sync notifications from backend database on mount
+    notificationService.getNotifications().then((fresh) => {
+      if (fresh && fresh.length > 0) {
+        setItems(fresh);
+      }
+    });
+  }, [setItems]);
+
   const filtered = items.filter((n) =>
     (!category || n.category === category) &&
-    (n.title.toLowerCase().includes(search.toLowerCase()) || n.message.toLowerCase().includes(search.toLowerCase()))
+    ((n.title || "").toLowerCase().includes(search.toLowerCase()) || (n.message || "").toLowerCase().includes(search.toLowerCase()))
   );
 
-  function markRead(id) { setItems((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n))); }
-  function remove(id) { setItems((prev) => prev.filter((n) => n.id !== id)); toast.info("Notification removed."); }
-  function markAllRead() { setItems((prev) => prev.map((n) => ({ ...n, read: true }))); toast.success("All notifications marked as read."); }
+  async function markRead(id) {
+    await notificationService.markAsRead(id);
+    setItems((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+  }
+
+  async function remove(id) {
+    await notificationService.deleteNotification(id);
+    setItems((prev) => prev.filter((n) => n.id !== id));
+    toast.info("Notification removed.");
+  }
+
+  async function markAllRead() {
+    await notificationService.markAllAsRead();
+    setItems((prev) => prev.map((n) => ({ ...n, read: true })));
+    toast.success("All notifications marked as read.");
+  }
 
   return (
     <div>
       <PageHeader
-        title="Notifications"
-        subtitle={`${items.filter((n) => !n.read).length} unread`}
+        title="Notifications & Announcements"
+        subtitle={`${items.filter((n) => !n.read).length} unread alerts`}
         actions={<button className="btn-secondary" onClick={markAllRead}><CheckCheck size={15} /> Mark all as read</button>}
       />
 
@@ -44,28 +67,64 @@ export default function StudentNotifications() {
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState icon={Bell} title="No notifications" message="You're all caught up — nothing matches your filters." />
+        <EmptyState icon={Bell} title="No notifications" message="You're all caught up — no announcements or alerts match your filters." />
       ) : (
         <div className="space-y-3">
-          {filtered.map((n) => (
-            <div key={n.id} className={`card p-4 flex items-start justify-between gap-4 ${!n.read ? "border-navy-200" : ""}`}>
-              <div className="flex gap-3">
-                <div className={`h-2 w-2 rounded-full mt-2 shrink-0 ${!n.read ? "bg-accent-teal" : "bg-transparent"}`} />
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium text-navy-900 text-sm">{n.title}</p>
-                    <span className="badge-blue">{n.category}</span>
+          {filtered.map((n) => {
+            const isAnnouncement = n.category === "Announcements" || n.postedBy === "faculty";
+            return (
+              <div
+                key={n.id}
+                className={`card p-4.5 flex items-start justify-between gap-4 transition-all ${
+                  !n.read ? "border-l-4 border-l-accent-teal bg-white/95" : "bg-white/75"
+                } ${isAnnouncement ? "border-navy-200" : ""}`}
+              >
+                <div className="flex gap-3.5">
+                  <div className="mt-1 shrink-0">
+                    {isAnnouncement ? (
+                      <div className="h-8 w-8 rounded-xl bg-teal-50 text-accent-teal flex items-center justify-center">
+                        <Megaphone size={16} />
+                      </div>
+                    ) : (
+                      <div className="h-8 w-8 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center">
+                        <Bell size={16} />
+                      </div>
+                    )}
                   </div>
-                  <p className="text-sm text-navy-500 mt-1">{n.message}</p>
-                  <p className="text-xs text-navy-300 mt-1.5">{n.time}</p>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-semibold text-navy-900 text-sm">{n.title}</p>
+                      <span className={isAnnouncement ? "badge-teal" : "badge-blue"}>{n.category}</span>
+                      {n.priority && n.priority !== "Normal" && (
+                        <span className={n.priority === "Urgent" ? "badge-red" : "badge-amber"}>
+                          <AlertCircle size={10} className="mr-1 inline" /> {n.priority}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-navy-600 mt-1.5 leading-relaxed">{n.message}</p>
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-navy-400 mt-2">
+                      <span>{n.time || "Recently"}</span>
+                      {n.postedByName && (
+                        <span className="font-medium text-navy-600">· Posted by {n.postedByName}</span>
+                      )}
+                      {n.subject && <span>· Subject: {n.subject}</span>}
+                      {n.classId && <span>· Class: {n.classId}</span>}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-1 shrink-0">
+                  {!n.read && (
+                    <button onClick={() => markRead(n.id)} className="btn-ghost !py-1.5 !px-2.5 text-xs text-accent-teal font-medium">
+                      Mark read
+                    </button>
+                  )}
+                  <button onClick={() => remove(n.id)} className="btn-ghost !py-1.5 !px-2 text-accent-coral hover:bg-rose-50" title="Delete">
+                    <Trash2 size={14} />
+                  </button>
                 </div>
               </div>
-              <div className="flex gap-1 shrink-0">
-                {!n.read && <button onClick={() => markRead(n.id)} className="btn-ghost !py-1.5 !px-2 text-xs">Mark read</button>}
-                <button onClick={() => remove(n.id)} className="btn-ghost !py-1.5 !px-2 text-accent-coral"><Trash2 size={14} /></button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

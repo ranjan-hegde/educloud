@@ -28,7 +28,6 @@ const USER_SCOPED_KEYS = new Set([
   "resultsData",
   "pastSemesterResults",
   "feedback",
-  "notifications",
   "feeStructure",
   "userPreferences",
   "studentProfile",
@@ -94,22 +93,7 @@ const SEED_MAP = {
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
     return months.map((m) => ({ month: m, percentage: 100 }));
   },
-  notifications: () => {
-    const user = getCurrentUser();
-    if (!user || user.email === "student@example.com" || user.id === "STU2301") {
-      return mock.notificationsList;
-    }
-    return [
-      {
-        id: `notif-welcome-${Date.now()}`,
-        title: `Welcome, ${user.name ? user.name.split(" ")[0] : "Student"}!`,
-        message: `Your EduCloud account is ready. Course: ${user.course || "BCA"} (${user.semester || "1st Semester"}). Explore your subjects, schedule, and attendance.`,
-        time: "Just now",
-        read: false,
-        type: "academic",
-      },
-    ];
-  },
+  notifications: () => mock.notificationsList,
   assignments: () => mock.assignmentsList,
   assessments: () => mock.assessmentsList,
   courseMaterials: () => mock.courseMaterialsList,

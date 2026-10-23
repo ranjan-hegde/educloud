@@ -1,11 +1,29 @@
 import { Outlet, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, UserCog, Building2, BookMarked, Library, CalendarCheck, QrCode, GraduationCap, CalendarDays, Bell, BarChart3, Settings, MessageSquare, MapPin } from "lucide-react";
+import {
+  LayoutDashboard,
+  Users,
+  UserCog,
+  FileClock,
+  Building2,
+  BookMarked,
+  Library,
+  CalendarCheck,
+  QrCode,
+  GraduationCap,
+  CalendarDays,
+  Bell,
+  BarChart3,
+  Settings,
+  MessageSquare,
+  MapPin,
+} from "lucide-react";
 import DashboardShell from "./DashboardShell";
 
 const items = [
   { path: "", label: "Dashboard", icon: LayoutDashboard },
   { path: "/students", label: "Students", icon: Users },
   { path: "/faculty", label: "Faculty", icon: UserCog },
+  { path: "/requests", label: "Faculty Requests", icon: FileClock },
   { path: "/departments", label: "Departments", icon: Building2 },
   { path: "/courses", label: "Courses", icon: BookMarked },
   { path: "/subjects", label: "Subjects", icon: Library },
@@ -21,11 +39,22 @@ const items = [
 ];
 
 const titles = {
-  "": "Dashboard", "/students": "Student Management", "/faculty": "Faculty Management",
-  "/departments": "Departments", "/courses": "Courses", "/subjects": "Subjects",
-  "/attendance": "Attendance", "/qr-attendance": "QR Attendance Management", "/locations": "Location Management",
-  "/results": "Results Management", "/timetable": "Timetable Management", "/notifications": "Notifications & Announcements",
-  "/reports": "Reports", "/chatbot": "AI Assistant", "/settings": "System Settings",
+  "": "Dashboard",
+  "/students": "Student Management",
+  "/faculty": "Faculty Management",
+  "/requests": "Faculty Requests Management",
+  "/departments": "Departments",
+  "/courses": "Courses",
+  "/subjects": "Subjects",
+  "/attendance": "Attendance",
+  "/qr-attendance": "QR Attendance Management",
+  "/locations": "Location Management",
+  "/results": "Results Management",
+  "/timetable": "Timetable Management",
+  "/notifications": "Notifications & Announcements",
+  "/reports": "Reports",
+  "/chatbot": "AI Assistant",
+  "/settings": "System Settings",
 };
 
 export default function AdminLayout() {

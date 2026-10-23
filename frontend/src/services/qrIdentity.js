@@ -1,10 +1,57 @@
 // qrIdentity.js
-// The QR encodes the SPECIFIC attendance SESSION (via its unique Session ID)
-// created by Faculty — not just the subject. A session's QR image stays the
-// same for the lifetime of that session (it isn't regenerated on every
-// render or every scan), but a new session naturally gets a new Session ID.
+// Production QR payload encoding and decoding for EduCloud attendance.
 
 const APP_TAG = "educloud";
+
+/**
+ * Builds a deterministic, unique QR payload for a student that DOES NOT CHANGE.
+ * Serves as the student's digital QR Attendance ID pass.
+ */
+export function buildStudentQrPayload(student) {
+  const rawId = student.rollNo || student.studentId || student.id || "STU2301";
+  return JSON.stringify({
+    app: APP_TAG,
+    type: "student-identity",
+    studentId: String(rawId),
+    rollNo: String(student.rollNo || rawId),
+    name: student.name || "Student",
+    email: student.email || "",
+    course: student.course || "BCA",
+    semester: student.semester || "5th Semester",
+  });
+}
+
+/** Parses a scanned student QR code. Returns decoded student identity or null. */
+export function parseStudentQrPayload(raw) {
+  if (!raw) return null;
+  const trimmed = typeof raw === "string" ? raw.trim() : "";
+  try {
+    const data = JSON.parse(trimmed);
+    if (data && (data.type === "student-identity" || data.studentId || data.rollNo)) {
+      return {
+        studentId: data.studentId || data.rollNo,
+        rollNo: data.rollNo || data.studentId,
+        name: data.name || "Student",
+        email: data.email || "",
+        course: data.course || "BCA",
+        semester: data.semester || "5th Semester",
+      };
+    }
+  } catch {
+    // If raw scanned string is a student roll number or ID directly (e.g. "STU2301" or "2301")
+    if (/^STU/i.test(trimmed) || /^\d+$/.test(trimmed)) {
+      return {
+        studentId: trimmed,
+        rollNo: trimmed,
+        name: `Student (${trimmed})`,
+        email: "",
+        course: "BCA",
+        semester: "5th Semester",
+      };
+    }
+  }
+  return null;
+}
 
 export function buildSessionQrPayload(session) {
   return JSON.stringify({
@@ -31,19 +78,6 @@ export function generateSessionId(dateISO, sequence) {
   return `ATT-${compact}-${String(sequence).padStart(3, "0")}`;
 }
 
-/**
- * Computes the next safe sequence number for a NEW session on `dateISO`,
- * given all existing sessions.
- *
- * BUG THIS FIXES: sequence numbers were previously derived from
- * `allSessions.length + 1` — the TOTAL number of sessions across every
- * date. That means (a) the sequence keeps climbing forever instead of
- * resetting per day, and (b) once any session is ever deleted, a later
- * session created on the SAME date can be assigned a sequence number
- * that's already in use for that date, producing a duplicate Session ID.
- * This scans only sessions that already start with today's date prefix
- * and returns one past the highest sequence actually in use for that day.
- */
 export function nextSessionSequence(existingSessions, dateISO) {
   const compact = dateISO.replace(/-/g, "");
   const prefix = `ATT-${compact}-`;
@@ -57,12 +91,6 @@ export function nextSessionSequence(existingSessions, dateISO) {
   return max + 1;
 }
 
-/**
- * Converts a native <input type="time"> value ("HH:MM", 24-hour) into an
- * unambiguous 12-hour "hh:mm AM/PM" string — the exact format the rest of
- * the app's session times, display, and validation already use. Handles
- * the 12:00 AM (midnight) / 12:00 PM (noon) edge cases correctly.
- */
 export function to12HourTime(rawHHMM) {
   if (!rawHHMM) return "";
   const [hStr, mStr] = rawHHMM.split(":");

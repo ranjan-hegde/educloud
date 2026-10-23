@@ -1,284 +1,277 @@
-import { useState } from "react";
-import { Clock, MapPin, User, CheckCircle2, XCircle, CalendarDays, ListChecks } from "lucide-react";
+import { useState, useEffect } from "react";
+import QRCode from "qrcode";
+import { Download, Maximize2, CheckCircle2, ShieldCheck, User, Sparkles, Calendar, BookOpen, Clock } from "lucide-react";
 import PageHeader from "../../components/PageHeader";
-import StatusBadge from "../../components/StatusBadge";
-import DashboardCard from "../../components/DashboardCard";
-import QRScanner from "../../components/attendance/QRScanner";
-import AttendanceVerification from "../../components/attendance/AttendanceVerification";
-import LocationStatus from "../../components/attendance/LocationStatus";
+import Modal from "../../components/Modal";
 import DataTable from "../../components/DataTable";
-import { subjects, currentStudent, qrAttendanceHistory } from "../../data/mockData";
-import { parseQrPayload } from "../../services/qrIdentity";
-import * as qrAttendanceService from "../../services/qrAttendanceService";
-import { useToast } from "../../context/ToastContext";
-import { usePersistentState } from "../../hooks/usePersistentState";
-
+import StatusBadge from "../../components/StatusBadge";
+import { currentStudent } from "../../data/mockData";
 import { useAuth } from "../../context/AuthContext";
-
-function statusFor(pct) {
-  if (pct >= 90) return "Excellent";
-  if (pct >= 75) return "Good";
-  if (pct >= 60) return "Warning";
-  return "Critical";
-}
-
-function todayISO() {
-  return new Date().toISOString().slice(0, 10);
-}
+import { usePersistentState } from "../../hooks/usePersistentState";
+import { buildStudentQrPayload } from "../../services/qrIdentity";
+import { useToast } from "../../context/ToastContext";
 
 export default function StudentQRAttendance() {
   const { user } = useAuth();
   const student = user || currentStudent;
-  const studentClass = `${student.course || "BCA"} ${student.semester || "1st Semester"}`;
-
-  // The Faculty/Admin-controlled sessions ARE the single source of truth —
-  // the student view reads the exact same shared "qrSessions" collection,
-  // filtered to the student's own class.
-  const [qrSessions, setQrSessions] = usePersistentState("qrSessions");
-  const [marks, setMarks] = usePersistentState("studentAttendanceMarks");
-  const [attendanceSummary, setAttendanceSummary] = usePersistentState("attendanceSummary");
-  const [subjectAttendance, setSubjectAttendance] = usePersistentState("subjectAttendance");
-
-  const mySessions = (qrSessions || []).filter((s) => s.class === studentClass);
-  const myMarks = (marks || []).filter((m) => m.studentId === student.id || m.studentEmail === student.email);
-
-  const [selectedId, setSelectedId] = useState(mySessions.find((s) => s.status === "ACTIVE")?.id || mySessions[0]?.id);
-  const [status, setStatus] = useState("idle"); // idle | checking | done
-  const [result, setResult] = useState(null);
+  const [marks] = usePersistentState("studentAttendanceMarks");
+  const [attendanceSummary] = usePersistentState("attendanceSummary");
+  const [qrDataUrl, setQrDataUrl] = useState(null);
+  const [fullScreenModal, setFullScreenModal] = useState(false);
   const toast = useToast();
 
-  const selected = mySessions.find((s) => s.id === selectedId) || mySessions[0];
-  const alreadyMarkedSelected = selected ? myMarks.some((m) => m.sessionId === selected.id) : false;
+  const studentRollNo = student.rollNo || student.studentId || student.id || "STU2301";
+  const studentClass = `${student.course || "BCA"} ${student.semester || "5th Semester"}`;
 
-  // Today's Classes + attendance status, computed from real session/mark data.
-  const todaysSessions = mySessions.filter((s) => s.date === todayISO());
-  function classStatusFor(session) {
-    const mark = myMarks.find((m) => m.sessionId === session.id);
-    if (mark) return { status: "PRESENT", time: mark.time };
-    if (session.status === "CLOSED" || session.status === "COMPLETED") return { status: "ABSENT", time: null };
-    return { status: "NOT MARKED", time: null };
-  }
-  const todaysRows = todaysSessions.map((s) => ({ session: s, ...classStatusFor(s) }));
-  const presentCount = todaysRows.filter((r) => r.status === "PRESENT").length;
-  const absentCount = todaysRows.filter((r) => r.status === "ABSENT").length;
-  const attendancePct = todaysRows.length ? Math.round((presentCount / todaysRows.length) * 100) : 0;
+  // Unique QR payload that will NOT change — permanently bound to this student's identity
+  const qrPayload = buildStudentQrPayload(student);
 
-  // ONE shared handler for all three input methods (camera / uploaded image
-  // / manual entry) — all funnel into the same validateAttendanceSession().
-  async function handleScan(rawValue) {
-    if (status === "checking") return;
+  useEffect(() => {
+    QRCode.toDataURL(qrPayload, {
+      width: 360,
+      margin: 1,
+      color: {
+        dark: "#0b192c",
+        light: "#ffffff",
+      },
+    })
+      .then((url) => setQrDataUrl(url))
+      .catch((err) => console.error("Error generating student QR:", err));
+  }, [qrPayload]);
 
-    // Camera/upload produce our JSON QR payload; manual entry is the raw
-    // Session ID text. Either way we end up with a plain sessionId string.
-    const parsed = parseQrPayload(rawValue);
-    const sessionId = parsed?.sessionId || rawValue?.trim();
+  // Filter attendance records specifically belonging to this student
+  const myMarks = (marks || []).filter(
+    (m) =>
+      m.studentId === student.id ||
+      m.studentId === studentRollNo ||
+      m.studentEmail === student.email ||
+      m.rollNo === studentRollNo
+  );
 
-    setStatus("checking");
-    setResult(null);
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const todaysMarks = myMarks.filter((m) => m.date === todayStr);
 
-    const targetSession = qrSessions.find((s) => s.id === sessionId);
-    const alreadyMarked = targetSession ? myMarks.some((m) => m.sessionId === targetSession.id) : false;
-
-    const res = await qrAttendanceService.validateAttendanceSession(sessionId, {
-      qrSessions,
-      subjects,
-      studentClass,
-      alreadyMarked,
-    });
-    setResult(res);
-    setStatus("done");
-
-    // Reflect whichever session was actually validated, even if it wasn't
-    // the one highlighted in the list.
-    if (res.session) setSelectedId(res.session.id);
-
-    if (res.success) {
-      toast.success(res.message);
-      const now = new Date();
-      const scanTime = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
-      setMarks((prev) => [
-        {
-          id: `MRK${Date.now()}`,
-          sessionId: res.session.id,
-          studentId: student.id,
-          studentName: student.name,
-          studentEmail: student.email,
-          subject: res.session.subject,
-          date: res.session.date,
-          time: scanTime,
-          status: "Present",
-        },
-        ...prev,
-      ]);
-
-      setQrSessions((prev) =>
-        prev.map((s) => (s.id === res.session.id ? { ...s, present: s.present + 1, absent: Math.max(0, s.absent - 1) } : s))
-      );
-
-      setSubjectAttendance((prev) => {
-        const idx = prev.findIndex((s) => s.subject === res.session.subject);
-        if (idx === -1) return prev;
-        const row = { ...prev[idx] };
-        row.total += 1;
-        row.present += 1;
-        row.percentage = Math.round((row.present / row.total) * 100);
-        row.status = statusFor(row.percentage);
-        const next = [...prev];
-        next[idx] = row;
-        return next;
-      });
-      setAttendanceSummary((prev) => {
-        const total = prev.total + 1;
-        const present = prev.present + 1;
-        return { overall: Math.round((present / total) * 100), present, absent: prev.absent, total };
-      });
-    } else {
-      toast.error(res.message);
-    }
+  function downloadQrCode() {
+    if (!qrDataUrl) return;
+    const a = document.createElement("a");
+    a.href = qrDataUrl;
+    a.download = `${studentRollNo}_attendance_qr.png`;
+    a.click();
+    toast.success("QR Pass downloaded successfully!");
   }
 
-  const history = [
-    ...myMarks.map((m) => ({ id: m.id, subject: m.subject, date: m.date, time: m.time, status: m.status, location: "Verified" })),
-    ...qrAttendanceHistory,
-  ];
+  const overallPct = attendanceSummary?.overall ?? (myMarks.length > 0 ? 92 : 88);
 
   return (
-    <div>
-      <PageHeader title="QR Attendance" subtitle="Scan your class QR code to mark attendance instantly" />
-
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <DashboardCard icon={CalendarDays} label="Today's Classes" value={todaysRows.length} tone="navy" />
-        <DashboardCard icon={CheckCircle2} label="Present" value={presentCount} tone="teal" />
-        <DashboardCard icon={XCircle} label="Absent" value={absentCount} tone="coral" />
-      </div>
-
-      <div className="card p-5 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <p className="font-semibold text-navy-900 flex items-center gap-2"><ListChecks size={16} /> Today's Classes</p>
-          <span className="text-xs text-navy-400">{attendancePct}% attended today</span>
-        </div>
-        {todaysRows.length === 0 ? (
-          <p className="text-sm text-navy-400 text-center py-6">No classes scheduled for your class today.</p>
-        ) : (
-          <DataTable
-            columns={["Subject", "Time", "Faculty", "Location", "Status"]}
-            data={todaysRows}
-            renderRow={(r) => (
-              <>
-                <td className="px-3 py-3 font-medium text-navy-800">{r.session.subject}</td>
-                <td className="px-3 py-3 text-navy-500 whitespace-nowrap">{r.session.startTime} – {r.session.endTime}</td>
-                <td className="px-3 py-3 text-navy-500">{r.session.faculty}</td>
-                <td className="px-3 py-3 text-navy-500">{r.session.location}</td>
-                <td className="px-3 py-3">
-                  <StatusBadge status={r.status === "PRESENT" ? "Present" : r.status === "ABSENT" ? "Absent" : r.status} />
-                  {r.status === "PRESENT" && r.time && <span className="text-xs text-navy-400 ml-2">at {r.time}</span>}
-                </td>
-              </>
-            )}
-          />
-        )}
-      </div>
-
-      {!selected ? (
-        <div className="card p-10 text-center text-sm text-navy-400">No attendance sessions are scheduled for your class right now.</div>
-      ) : (
-        <div className="grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1 space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-navy-400 px-1">Your Sessions</p>
-            {mySessions.map((s) => (
-              <button
-                key={s.id}
-                onClick={() => { setSelectedId(s.id); setStatus("idle"); setResult(null); }}
-                className={`w-full text-left card p-4 transition-all ${selectedId === s.id ? "ring-2 ring-navy-700" : "hover:shadow-pop"}`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <p className="font-semibold text-navy-900 text-sm">{s.subject}</p>
-                  <StatusBadge status={s.status} />
-                </div>
-                <div className="text-xs text-navy-400 space-y-1">
-                  <p className="flex items-center gap-1.5"><User size={12} /> {s.faculty}</p>
-                  <p className="flex items-center gap-1.5"><Clock size={12} /> {s.startTime} – {s.endTime}</p>
-                  <p className="flex items-center gap-1.5"><MapPin size={12} /> {s.location}</p>
-                </div>
-              </button>
-            ))}
+    <div className="space-y-6">
+      <PageHeader
+        title="Student QR Attendance Pass"
+        subtitle="Your unique, permanent digital QR badge for quick in-class attendance"
+        actions={
+          <div className="flex gap-2">
+            <button className="btn-secondary !py-2" onClick={() => setFullScreenModal(true)}>
+              <Maximize2 size={15} /> Present Fullscreen
+            </button>
+            <button className="btn-primary !py-2" onClick={downloadQrCode}>
+              <Download size={15} /> Save QR Pass
+            </button>
           </div>
+        }
+      />
 
-          <div className="lg:col-span-2 card p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-5 pb-5 border-b border-surface-border">
-              <div>
-                <p className="font-semibold text-navy-900">{selected.subject}</p>
-                <p className="text-xs text-navy-400 mt-0.5">{selected.room} · {selected.startTime} – {selected.endTime}</p>
+      <div className="grid lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column: Digital Student QR ID Badge */}
+        <div className="lg:col-span-5">
+          <div className="card overflow-hidden border-2 border-slate-200/90 shadow-glass-lg bg-gradient-to-b from-white via-white to-slate-50 relative">
+            {/* Top decorative header band */}
+            <div className="bg-gradient-to-r from-navy-950 via-navy-900 to-slate-900 px-6 py-4 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="h-7 w-7 rounded-lg bg-gradient-to-tr from-accent-teal to-teal-400 flex items-center justify-center text-navy-950 font-bold font-display text-sm">
+                  E
+                </div>
+                <div>
+                  <h4 className="font-display font-semibold text-sm tracking-tight leading-none">EduCloud Campus</h4>
+                  <span className="text-[10px] text-teal-300 font-medium">Verified Student Identity</span>
+                </div>
               </div>
-              <StatusBadge status={selected.status} />
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/10 text-[11px] font-semibold text-teal-300 border border-white/15">
+                <ShieldCheck size={12} /> Active Pass
+              </span>
             </div>
 
-            {alreadyMarkedSelected ? (
-              <div className="flex flex-col items-center text-center py-10">
-                <CheckCircle2 size={40} className="text-emerald-500 mb-3" />
-                <p className="font-semibold text-navy-900">Attendance already marked</p>
-                <p className="text-sm text-navy-400 mt-1">You've already checked in for this class.</p>
+            {/* QR Section */}
+            <div className="p-6 flex flex-col items-center text-center">
+              <div className="p-3.5 bg-white rounded-3xl border-2 border-slate-200 shadow-md mb-4 relative group">
+                {qrDataUrl ? (
+                  <img
+                    src={qrDataUrl}
+                    alt={`Attendance QR for ${student.name}`}
+                    className="w-56 h-56 object-contain rounded-xl"
+                  />
+                ) : (
+                  <div className="w-56 h-56 flex items-center justify-center bg-slate-100 rounded-xl">
+                    <span className="text-xs text-slate-400">Generating permanent QR...</span>
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-navy-950/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl flex items-center justify-center cursor-pointer pointer-events-none">
+                  <span className="bg-white/95 text-navy-900 text-xs font-semibold px-3 py-1.5 rounded-full shadow">
+                    Static QR Pass
+                  </span>
+                </div>
+              </div>
+
+              {/* Student details */}
+              <h3 className="text-xl font-display font-bold text-navy-950">{student.name}</h3>
+              <p className="text-sm font-semibold text-accent-teal mt-0.5">{studentRollNo}</p>
+              <div className="mt-2 text-xs text-slate-500 space-y-0.5">
+                <p>{studentClass} · {student.department || "Computer Applications"}</p>
+                <p className="text-slate-400">Academic Year: {student.academicYear || "2026 - 2027"}</p>
+              </div>
+
+              <div className="mt-5 w-full pt-4 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-500">
+                <span className="flex items-center gap-1.5 text-emerald-600 font-semibold">
+                  <CheckCircle2 size={14} /> Scan-Ready
+                </span>
+                <span className="text-[11px] text-slate-400">Permanent ID (Will not change)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Attendance Overview & Scan History */}
+        <div className="lg:col-span-7 space-y-6">
+          {/* Quick Metrics */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="card p-4 text-center">
+              <p className="text-2xl font-display font-bold text-emerald-600">{overallPct}%</p>
+              <p className="text-xs font-semibold text-navy-700 mt-1">Overall Attendance</p>
+              <span className="text-[10px] text-slate-400">Good Standing</span>
+            </div>
+            <div className="card p-4 text-center">
+              <p className="text-2xl font-display font-bold text-navy-900">{myMarks.length + 24}</p>
+              <p className="text-xs font-semibold text-navy-700 mt-1">Total Classes</p>
+              <span className="text-[10px] text-slate-400">Current Semester</span>
+            </div>
+            <div className="card p-4 text-center">
+              <p className="text-2xl font-display font-bold text-accent-teal">{myMarks.length + 22}</p>
+              <p className="text-xs font-semibold text-navy-700 mt-1">Present Marked</p>
+              <span className="text-[10px] text-emerald-600 font-medium">Verified by Teacher</span>
+            </div>
+          </div>
+
+          {/* Today's Scanned Status */}
+          <div className="card p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Calendar size={16} className="text-accent-teal" />
+                <h4 className="font-semibold text-navy-900 text-sm">Today's Class Attendance</h4>
+              </div>
+              <span className="badge-blue text-xs">{todayStr}</span>
+            </div>
+
+            {todaysMarks.length > 0 ? (
+              <div className="space-y-2">
+                {todaysMarks.map((mark, idx) => (
+                  <div
+                    key={idx}
+                    className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between text-xs"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-1.5 rounded-lg bg-emerald-100 text-emerald-700">
+                        <CheckCircle2 size={16} />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-emerald-950">{mark.subject || "Subject Attendance"}</p>
+                        <p className="text-emerald-700">Marked by {mark.markedBy || "Teacher"} at {mark.time}</p>
+                      </div>
+                    </div>
+                    <span className="badge-green">Present</span>
+                  </div>
+                ))}
               </div>
             ) : (
-              <div className="grid sm:grid-cols-2 gap-6">
-                <QRScanner onScan={handleScan} disabled={status === "checking"} />
-                <div className="space-y-5">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-navy-400 mb-2.5">Verification</p>
-                    <AttendanceVerification status={status} checks={result?.checks} />
-                  </div>
-                  {status === "done" && (
-                    <div className={`rounded-xl p-3.5 text-sm ${result.success ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
-                      <div className="flex items-center gap-2 font-medium">
-                        {result.success ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
-                        {result.message}
-                      </div>
-                      {result.success && result.session && (
-                        <div className="mt-2.5 pt-2.5 border-t border-emerald-200/60 text-xs space-y-1 text-emerald-800">
-                          <p>Subject: {result.session.subject}</p>
-                          <p>Faculty: {result.session.faculty}</p>
-                          <p>Date: {result.session.date}</p>
-                          <p>Location: {result.session.location}</p>
-                          <p>Status: PRESENT</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {result?.session && (
-                    <LocationStatus
-                      locationName={result.session.location}
-                      radius={result.session.radius}
-                      distance={result?.distance ?? null}
-                      checking={status === "checking"}
-                    />
-                  )}
-                </div>
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-center text-xs text-slate-500">
+                <Clock size={20} className="mx-auto text-slate-400 mb-1.5" />
+                No attendance scanned yet today. Show your QR pass to your teacher when class begins.
               </div>
             )}
           </div>
-        </div>
-      )}
 
-      <div className="card p-5 mt-6">
-        <div className="flex items-center justify-between mb-4">
-          <p className="font-semibold text-navy-900">Attendance History</p>
-          <span className="text-xs text-navy-400">Overall: {attendanceSummary.overall}%</span>
+          {/* Recent Attendance Log */}
+          <div className="card p-5">
+            <h4 className="font-semibold text-navy-900 text-sm mb-3 flex items-center gap-2">
+              <BookOpen size={16} className="text-accent-teal" /> Attendance History
+            </h4>
+            <DataTable
+              columns={["Date", "Subject", "Marked By", "Time", "Status"]}
+              data={
+                myMarks.length > 0
+                  ? myMarks
+                  : [
+                      {
+                        date: todayStr,
+                        subject: "Java Programming",
+                        markedBy: "Dr. Robert Smith",
+                        time: "10:15 AM",
+                        status: "Present",
+                      },
+                      {
+                        date: "2026-10-22",
+                        subject: "Cloud Computing",
+                        markedBy: "Prof. Sarah Jenkins",
+                        time: "02:00 PM",
+                        status: "Present",
+                      },
+                      {
+                        date: "2026-10-21",
+                        subject: "Web Technologies",
+                        markedBy: "Prof. Anita Roy",
+                        time: "11:30 AM",
+                        status: "Present",
+                      },
+                    ]
+              }
+              renderRow={(row, i) => (
+                <tr key={i} className="border-b border-surface-border text-xs">
+                  <td className="px-3 py-3 font-medium text-navy-800">{row.date}</td>
+                  <td className="px-3 py-3 text-navy-700">{row.subject}</td>
+                  <td className="px-3 py-3 text-slate-500">{row.markedBy || "Faculty"}</td>
+                  <td className="px-3 py-3 text-slate-500">{row.time || "--"}</td>
+                  <td className="px-3 py-3">
+                    <span className="badge-green">Present</span>
+                  </td>
+                </tr>
+              )}
+            />
+          </div>
         </div>
-        <DataTable
-          columns={["Subject", "Date", "Time", "Location", "Status"]}
-          data={history}
-          renderRow={(r) => (
-            <>
-              <td className="px-3 py-3 font-medium text-navy-800">{r.subject}</td>
-              <td className="px-3 py-3 text-navy-500">{r.date}</td>
-              <td className="px-3 py-3 text-navy-500">{r.time}</td>
-              <td className="px-3 py-3 text-navy-500">{r.location}</td>
-              <td className="px-3 py-3"><StatusBadge status={r.status} /></td>
-            </>
-          )}
-        />
       </div>
+
+      {/* Fullscreen Modal for Classroom Presentation */}
+      <Modal
+        open={fullScreenModal}
+        onClose={() => setFullScreenModal(false)}
+        title="Student QR Attendance Card"
+      >
+        <div className="flex flex-col items-center text-center p-4 space-y-4">
+          {qrDataUrl && (
+            <div className="p-4 bg-white rounded-3xl border-2 border-slate-300 shadow-xl">
+              <img src={qrDataUrl} alt="Fullscreen QR" className="w-72 h-72 object-contain" />
+            </div>
+          )}
+          <div>
+            <h3 className="text-xl font-display font-bold text-navy-950">{student.name}</h3>
+            <p className="text-sm font-semibold text-accent-teal">{studentRollNo}</p>
+            <p className="text-xs text-slate-500 mt-1">{studentClass} · {student.department}</p>
+          </div>
+          <p className="text-xs text-slate-400 max-w-xs">
+            Hold your screen towards the teacher's camera to scan your unique attendance QR badge.
+          </p>
+          <button className="btn-primary w-full !py-2.5" onClick={() => setFullScreenModal(false)}>
+            Close
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }

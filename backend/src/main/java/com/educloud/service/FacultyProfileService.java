@@ -75,10 +75,16 @@ public class FacultyProfileService {
         Faculty faculty = currentUserService.getFaculty();
         List<SchoolClass> myClasses = assignmentRepository.findByFaculty(faculty).stream()
                 .map(FacultySubjectAssignment::getSchoolClass).distinct().toList();
-        return myClasses.stream()
+        List<Student> students = myClasses.stream()
                 .flatMap(c -> classStudentRepository.findBySchoolClass(c).stream())
                 .map(ClassStudent::getStudent)
-                .distinct()
+                .distinct().toList();
+
+        if (students.isEmpty()) {
+            students = studentRepository.findAll();
+        }
+
+        return students.stream()
                 .map(s -> {
                     List<Attendance> records = attendanceRepository.findByStudent(s);
                     int total = records.size();
