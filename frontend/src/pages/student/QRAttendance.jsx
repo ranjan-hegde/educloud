@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import QRCode from "qrcode";
-import { Download, Maximize2, CheckCircle2, ShieldCheck, User, Sparkles, Calendar, BookOpen, Clock } from "lucide-react";
+import { Download, Maximize2, CheckCircle2, ShieldCheck, User, Calendar, BookOpen, Clock } from "lucide-react";
 import PageHeader from "../../components/PageHeader";
 import Modal from "../../components/Modal";
 import DataTable from "../../components/DataTable";
-import StatusBadge from "../../components/StatusBadge";
 import { currentStudent } from "../../data/mockData";
 import { useAuth } from "../../context/AuthContext";
 import { usePersistentState } from "../../hooks/usePersistentState";
@@ -28,7 +27,7 @@ export default function StudentQRAttendance() {
 
   useEffect(() => {
     QRCode.toDataURL(qrPayload, {
-      width: 360,
+      width: 400,
       margin: 1,
       color: {
         dark: "#0b192c",
@@ -60,31 +59,31 @@ export default function StudentQRAttendance() {
     toast.success("QR Pass downloaded successfully!");
   }
 
-  const overallPct = attendanceSummary?.overall ?? (myMarks.length > 0 ? 92 : 88);
+  const overallPct = attendanceSummary?.overall ?? (myMarks.length > 0 ? 95 : 100);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <PageHeader
         title="Student QR Attendance Pass"
         subtitle="Your unique, permanent digital QR badge for quick in-class attendance"
         actions={
-          <div className="flex gap-2">
-            <button className="btn-secondary !py-2" onClick={() => setFullScreenModal(true)}>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <button className="btn-secondary !py-2.5 sm:!py-2 flex-1 sm:flex-initial" onClick={() => setFullScreenModal(true)}>
               <Maximize2 size={15} /> Present Fullscreen
             </button>
-            <button className="btn-primary !py-2" onClick={downloadQrCode}>
-              <Download size={15} /> Save QR Pass
+            <button className="btn-primary !py-2.5 sm:!py-2 flex-1 sm:flex-initial" onClick={downloadQrCode}>
+              <Download size={15} /> Save Pass
             </button>
           </div>
         }
       />
 
-      <div className="grid lg:grid-cols-12 gap-6 items-start">
+      <div className="grid lg:grid-cols-12 gap-4 sm:gap-6 items-start">
         {/* Left Column: Digital Student QR ID Badge */}
-        <div className="lg:col-span-5">
+        <div className="lg:col-span-5 max-w-md mx-auto w-full">
           <div className="card overflow-hidden border-2 border-slate-200/90 shadow-glass-lg bg-gradient-to-b from-white via-white to-slate-50 relative">
             {/* Top decorative header band */}
-            <div className="bg-gradient-to-r from-navy-950 via-navy-900 to-slate-900 px-6 py-4 text-white flex items-center justify-between">
+            <div className="bg-gradient-to-r from-navy-950 via-navy-900 to-slate-900 px-5 sm:px-6 py-4 text-white flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="h-7 w-7 rounded-lg bg-gradient-to-tr from-accent-teal to-teal-400 flex items-center justify-center text-navy-950 font-bold font-display text-sm">
                   E
@@ -100,24 +99,19 @@ export default function StudentQRAttendance() {
             </div>
 
             {/* QR Section */}
-            <div className="p-6 flex flex-col items-center text-center">
+            <div className="p-5 sm:p-6 flex flex-col items-center text-center">
               <div className="p-3.5 bg-white rounded-3xl border-2 border-slate-200 shadow-md mb-4 relative group">
                 {qrDataUrl ? (
                   <img
                     src={qrDataUrl}
                     alt={`Attendance QR for ${student.name}`}
-                    className="w-56 h-56 object-contain rounded-xl"
+                    className="w-56 h-56 sm:w-64 sm:h-64 object-contain rounded-xl"
                   />
                 ) : (
                   <div className="w-56 h-56 flex items-center justify-center bg-slate-100 rounded-xl">
                     <span className="text-xs text-slate-400">Generating permanent QR...</span>
                   </div>
                 )}
-                <div className="absolute inset-0 bg-navy-950/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl flex items-center justify-center cursor-pointer pointer-events-none">
-                  <span className="bg-white/95 text-navy-900 text-xs font-semibold px-3 py-1.5 rounded-full shadow">
-                    Static QR Pass
-                  </span>
-                </div>
               </div>
 
               {/* Student details */}
@@ -139,32 +133,32 @@ export default function StudentQRAttendance() {
         </div>
 
         {/* Right Column: Attendance Overview & Scan History */}
-        <div className="lg:col-span-7 space-y-6">
+        <div className="lg:col-span-7 space-y-4 sm:space-y-6">
           {/* Quick Metrics */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="card p-4 text-center">
-              <p className="text-2xl font-display font-bold text-emerald-600">{overallPct}%</p>
-              <p className="text-xs font-semibold text-navy-700 mt-1">Overall Attendance</p>
-              <span className="text-[10px] text-slate-400">Good Standing</span>
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            <div className="card p-3 sm:p-4 text-center">
+              <p className="text-xl sm:text-2xl font-display font-bold text-emerald-600">{overallPct}%</p>
+              <p className="text-[11px] sm:text-xs font-semibold text-navy-700 mt-1">Attendance</p>
+              <span className="text-[10px] text-slate-400 hidden sm:inline">Good Standing</span>
             </div>
-            <div className="card p-4 text-center">
-              <p className="text-2xl font-display font-bold text-navy-900">{myMarks.length + 24}</p>
-              <p className="text-xs font-semibold text-navy-700 mt-1">Total Classes</p>
-              <span className="text-[10px] text-slate-400">Current Semester</span>
+            <div className="card p-3 sm:p-4 text-center">
+              <p className="text-xl sm:text-2xl font-display font-bold text-navy-900">{myMarks.length}</p>
+              <p className="text-[11px] sm:text-xs font-semibold text-navy-700 mt-1">Scanned</p>
+              <span className="text-[10px] text-slate-400 hidden sm:inline">This Semester</span>
             </div>
-            <div className="card p-4 text-center">
-              <p className="text-2xl font-display font-bold text-accent-teal">{myMarks.length + 22}</p>
-              <p className="text-xs font-semibold text-navy-700 mt-1">Present Marked</p>
-              <span className="text-[10px] text-emerald-600 font-medium">Verified by Teacher</span>
+            <div className="card p-3 sm:p-4 text-center">
+              <p className="text-xl sm:text-2xl font-display font-bold text-accent-teal">{todaysMarks.length}</p>
+              <p className="text-[11px] sm:text-xs font-semibold text-navy-700 mt-1">Today</p>
+              <span className="text-[10px] text-emerald-600 font-medium hidden sm:inline">Verified</span>
             </div>
           </div>
 
           {/* Today's Scanned Status */}
-          <div className="card p-5">
+          <div className="card p-4 sm:p-5">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <Calendar size={16} className="text-accent-teal" />
-                <h4 className="font-semibold text-navy-900 text-sm">Today's Class Attendance</h4>
+                <h4 className="font-semibold text-navy-900 text-sm">Today&apos;s Class Attendance</h4>
               </div>
               <span className="badge-blue text-xs">{todayStr}</span>
             </div>
@@ -182,7 +176,7 @@ export default function StudentQRAttendance() {
                       </div>
                       <div>
                         <p className="font-semibold text-emerald-950">{mark.subject || "Subject Attendance"}</p>
-                        <p className="text-emerald-700">Marked by {mark.markedBy || "Teacher"} at {mark.time}</p>
+                        <p className="text-emerald-700">Marked by {mark.faculty || mark.markedBy || "Teacher"} at {mark.time}</p>
                       </div>
                     </div>
                     <span className="badge-green">Present</span>
@@ -198,49 +192,24 @@ export default function StudentQRAttendance() {
           </div>
 
           {/* Recent Attendance Log */}
-          <div className="card p-5">
+          <div className="card p-4 sm:p-5">
             <h4 className="font-semibold text-navy-900 text-sm mb-3 flex items-center gap-2">
               <BookOpen size={16} className="text-accent-teal" /> Attendance History
             </h4>
             <DataTable
-              columns={["Date", "Subject", "Marked By", "Time", "Status"]}
-              data={
-                myMarks.length > 0
-                  ? myMarks
-                  : [
-                      {
-                        date: todayStr,
-                        subject: "Java Programming",
-                        markedBy: "Dr. Robert Smith",
-                        time: "10:15 AM",
-                        status: "Present",
-                      },
-                      {
-                        date: "2026-10-22",
-                        subject: "Cloud Computing",
-                        markedBy: "Prof. Sarah Jenkins",
-                        time: "02:00 PM",
-                        status: "Present",
-                      },
-                      {
-                        date: "2026-10-21",
-                        subject: "Web Technologies",
-                        markedBy: "Prof. Anita Roy",
-                        time: "11:30 AM",
-                        status: "Present",
-                      },
-                    ]
-              }
-              renderRow={(row, i) => (
-                <tr key={i} className="border-b border-surface-border text-xs">
-                  <td className="px-3 py-3 font-medium text-navy-800">{row.date}</td>
-                  <td className="px-3 py-3 text-navy-700">{row.subject}</td>
-                  <td className="px-3 py-3 text-slate-500">{row.markedBy || "Faculty"}</td>
-                  <td className="px-3 py-3 text-slate-500">{row.time || "--"}</td>
+              columns={["Date", "Subject", "Teacher", "Time", "Status"]}
+              data={myMarks}
+              emptyMessage="No scanned attendance records yet. Your attendance history will appear here once your teachers scan your pass."
+              renderRow={(row) => (
+                <>
+                  <td className="px-3 py-3 font-medium text-navy-800 text-xs">{row.date}</td>
+                  <td className="px-3 py-3 text-navy-700 text-xs font-semibold">{row.subject}</td>
+                  <td className="px-3 py-3 text-slate-500 text-xs">{row.faculty || row.markedBy || "Teacher"}</td>
+                  <td className="px-3 py-3 text-slate-500 text-xs font-mono">{row.time || "--"}</td>
                   <td className="px-3 py-3">
-                    <span className="badge-green">Present</span>
+                    <span className="badge-green text-xs">Present</span>
                   </td>
-                </tr>
+                </>
               )}
             />
           </div>
@@ -253,10 +222,10 @@ export default function StudentQRAttendance() {
         onClose={() => setFullScreenModal(false)}
         title="Student QR Attendance Card"
       >
-        <div className="flex flex-col items-center text-center p-4 space-y-4">
+        <div className="flex flex-col items-center text-center p-3 sm:p-4 space-y-4">
           {qrDataUrl && (
             <div className="p-4 bg-white rounded-3xl border-2 border-slate-300 shadow-xl">
-              <img src={qrDataUrl} alt="Fullscreen QR" className="w-72 h-72 object-contain" />
+              <img src={qrDataUrl} alt="Fullscreen QR" className="w-64 h-64 sm:w-72 sm:h-72 object-contain" />
             </div>
           )}
           <div>
@@ -265,7 +234,7 @@ export default function StudentQRAttendance() {
             <p className="text-xs text-slate-500 mt-1">{studentClass} · {student.department}</p>
           </div>
           <p className="text-xs text-slate-400 max-w-xs">
-            Hold your screen towards the teacher's camera to scan your unique attendance QR badge.
+            Hold your screen towards the teacher&apos;s camera to scan your unique attendance QR badge.
           </p>
           <button className="btn-primary w-full !py-2.5" onClick={() => setFullScreenModal(false)}>
             Close

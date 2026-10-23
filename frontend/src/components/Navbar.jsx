@@ -14,12 +14,10 @@ export default function Navbar({ onMenuClick, basePath, title }) {
 
   const studentClass = `${user?.course || "BCA"} ${user?.semester || "1st Semester"}`;
 
-  // Same scoping rule the Notifications pages already use: students only
-  // see class-scoped items (or unscoped general ones); other roles see all.
   const notificationsList =
     user?.role === "student"
-      ? allNotifications.filter((n) => !n.classId || n.classId === studentClass)
-      : allNotifications;
+      ? (allNotifications || []).filter((n) => !n.classId || n.classId === studentClass)
+      : allNotifications || [];
   const unread = notificationsList.filter((n) => !n.read).length;
 
   async function handleLogout() {
@@ -31,10 +29,18 @@ export default function Navbar({ onMenuClick, basePath, title }) {
   const avatarInitials = (user?.name || "User").slice(0, 2).toUpperCase();
 
   return (
-    <header className="sticky top-0 z-20 h-16 bg-white/70 backdrop-blur-xl border-b border-white/60 shadow-sm flex items-center justify-between px-4 sm:px-6">
-      <div className="flex items-center gap-3">
-        <button className="lg:hidden text-navy-600 hover:text-navy-900" onClick={onMenuClick}><Menu size={22} /></button>
-        <h2 className="font-display font-semibold text-navy-900 text-lg hidden sm:block tracking-tight">{title}</h2>
+    <header className="sticky top-0 z-20 h-16 bg-white/80 backdrop-blur-xl border-b border-white/60 shadow-sm flex items-center justify-between px-3 sm:px-6">
+      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <button
+          className="lg:hidden p-2 -ml-1 text-navy-700 hover:text-navy-950 rounded-xl hover:bg-slate-100/60 active:scale-95 transition-all"
+          onClick={onMenuClick}
+          aria-label="Open navigation menu"
+        >
+          <Menu size={22} />
+        </button>
+        <h2 className="font-display font-bold text-navy-950 text-sm sm:text-lg truncate max-w-[170px] sm:max-w-none tracking-tight">
+          {title}
+        </h2>
       </div>
 
       <div className="flex items-center gap-2 sm:gap-4">
@@ -42,19 +48,34 @@ export default function Navbar({ onMenuClick, basePath, title }) {
           <button
             className="relative p-2 rounded-xl hover:bg-white/80 text-navy-600 transition-colors border border-transparent hover:border-white/60 shadow-none hover:shadow-sm"
             onClick={() => setNotifOpen((o) => !o)}
+            aria-label="Notifications"
           >
             <Bell size={19} />
             {unread > 0 && (
-              <span className="absolute top-1 right-1 h-4 w-4 rounded-full bg-accent-coral text-white text-[10px] flex items-center justify-center font-bold shadow-sm">{unread}</span>
+              <span className="absolute top-1 right-1 h-4 w-4 rounded-full bg-accent-coral text-white text-[10px] flex items-center justify-center font-bold shadow-sm">
+                {unread}
+              </span>
             )}
           </button>
-          <NotificationPanel open={notifOpen} onClose={() => setNotifOpen(false)} notifications={notificationsList} basePath={basePath} />
+          <NotificationPanel
+            open={notifOpen}
+            onClose={() => setNotifOpen(false)}
+            notifications={notificationsList}
+            basePath={basePath}
+          />
         </div>
 
         <div className="relative">
-          <button className="flex items-center gap-2 pl-2 pr-2 py-1.5 rounded-xl hover:bg-white/80 border border-transparent hover:border-white/80 transition-all shadow-none hover:shadow-sm" onClick={() => setMenuOpen((o) => !o)}>
+          <button
+            className="flex items-center gap-2 pl-2 pr-2 py-1.5 rounded-xl hover:bg-white/80 border border-transparent hover:border-white/80 transition-all shadow-none hover:shadow-sm"
+            onClick={() => setMenuOpen((o) => !o)}
+          >
             {isGoogleAvatar ? (
-              <img src={user.avatar} alt={user.name} className="h-8 w-8 rounded-full object-cover border border-white/80 shadow-sm" />
+              <img
+                src={user.avatar}
+                alt={user.name}
+                className="h-8 w-8 rounded-full object-cover border border-white/80 shadow-sm"
+              />
             ) : (
               <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-navy-800 to-indigo-900 text-white text-xs font-semibold flex items-center justify-center shadow-sm">
                 {user?.avatar || avatarInitials}
@@ -67,21 +88,27 @@ export default function Navbar({ onMenuClick, basePath, title }) {
             <ChevronDown size={14} className="text-navy-400 hidden sm:block" />
           </button>
           {menuOpen && (
-            <div className="absolute right-0 top-12 w-52 bg-white/90 backdrop-blur-2xl rounded-2xl shadow-glass-lg py-2 animate-fade-in border border-white/80">
+            <div className="absolute right-0 top-12 w-52 bg-white/95 backdrop-blur-2xl rounded-2xl shadow-glass-lg py-2 animate-fade-in border border-white/80 z-50">
               <div className="px-3.5 py-2 border-b border-surface-border mb-1">
                 <p className="text-xs font-bold text-navy-900 truncate">{user?.name || "Account"}</p>
                 <p className="text-[11px] text-navy-400 truncate">{user?.email || ""}</p>
               </div>
 
               <button
-                onClick={() => { setMenuOpen(false); navigate(`${basePath}/profile`); }}
+                onClick={() => {
+                  setMenuOpen(false);
+                  navigate(`${basePath}/profile`);
+                }}
                 className="w-full text-left px-3.5 py-2 text-sm text-navy-700 hover:bg-navy-50 flex items-center gap-2"
               >
                 <UserIcon size={14} className="text-navy-400" /> My Profile
               </button>
 
               <button
-                onClick={() => { setMenuOpen(false); navigate(`${basePath}/settings`); }}
+                onClick={() => {
+                  setMenuOpen(false);
+                  navigate(`${basePath}/settings`);
+                }}
                 className="w-full text-left px-3.5 py-2 text-sm text-navy-700 hover:bg-navy-50 flex items-center gap-2"
               >
                 <SettingsIcon size={14} className="text-navy-400" /> Settings

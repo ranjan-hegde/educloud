@@ -55,6 +55,8 @@ export default function FacultyQRAttendance() {
   const [fullscreenModal, setFullscreenModal] = useState(false);
   const toast = useToast();
 
+  const todayStr = new Date().toISOString().slice(0, 10);
+
   // Generate Faculty QR Attendance Pass
   const facultyQrPayload = buildFacultyQrPayload({
     id: facultyId,
@@ -67,7 +69,7 @@ export default function FacultyQRAttendance() {
 
   useEffect(() => {
     QRCode.toDataURL(facultyQrPayload, {
-      width: 360,
+      width: 400,
       margin: 1,
       color: {
         dark: "#0b192c",
@@ -95,9 +97,11 @@ export default function FacultyQRAttendance() {
 
   const presentStudentIds = new Set(sessionMarks.map((m) => m.rollNo || m.studentId));
 
-  // Faculty's own attendance records scanned by Admin
-  const myFacultyCheckins = (facultyAttendanceLogs || []).filter(
-    (log) => log.facultyId === facultyId || log.email === facultyEmail || log.name === facultyName
+  // Check if this teacher was checked in today by Admin
+  const checkedInToday = (facultyAttendanceLogs || []).find(
+    (log) =>
+      log.date === todayStr &&
+      (log.facultyId === facultyId || log.email === facultyEmail || log.name === facultyName)
   );
 
   // Handle student camera scanner output
@@ -223,122 +227,113 @@ export default function FacultyQRAttendance() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <PageHeader
         title="QR Attendance System"
         subtitle="Live camera scanner for student attendance and your personal Faculty QR Attendance Pass"
       />
 
-      {/* Main Mode Tabs */}
-      <div className="flex gap-2 p-1 bg-slate-100 rounded-2xl w-fit">
-        <button
-          onClick={() => setActiveTab("STUDENT_SCANNER")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-            activeTab === "STUDENT_SCANNER"
-              ? "bg-navy-900 text-white shadow-sm"
-              : "text-navy-700 hover:text-navy-950"
-          }`}
-        >
-          <Camera size={14} /> Scan Student Attendance (Camera)
-        </button>
-        <button
-          onClick={() => setActiveTab("MY_FACULTY_PASS")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-            activeTab === "MY_FACULTY_PASS"
-              ? "bg-navy-900 text-white shadow-sm"
-              : "text-navy-700 hover:text-navy-950"
-          }`}
-        >
-          <QrCode size={14} /> My Faculty Attendance QR Pass
-        </button>
+      {/* Main Mode Tabs - Scrollable on mobile */}
+      <div className="overflow-x-auto scrollbar-none pb-1">
+        <div className="flex gap-2 p-1 bg-slate-100 rounded-2xl w-fit shrink-0">
+          <button
+            onClick={() => setActiveTab("STUDENT_SCANNER")}
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+              activeTab === "STUDENT_SCANNER"
+                ? "bg-navy-900 text-white shadow-sm"
+                : "text-navy-700 hover:text-navy-950"
+            }`}
+          >
+            <Camera size={14} /> Scan Students (Camera)
+          </button>
+          <button
+            onClick={() => setActiveTab("MY_FACULTY_PASS")}
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+              activeTab === "MY_FACULTY_PASS"
+                ? "bg-navy-900 text-white shadow-sm"
+                : "text-navy-700 hover:text-navy-950"
+            }`}
+          >
+            <QrCode size={14} /> My Faculty QR Pass
+          </button>
+        </div>
       </div>
 
       {activeTab === "MY_FACULTY_PASS" ? (
-        /* Faculty's Digital Attendance Pass (to be scanned by Admin) */
-        <div className="grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1">
-            <div className="card p-6 text-center space-y-4 border-2 border-teal-500/20 bg-gradient-to-b from-teal-50/20 to-white">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-teal-50 text-teal-800 rounded-full text-xs font-semibold border border-teal-200">
-                <ShieldCheck size={14} /> Digital Faculty Attendance Pass
-              </div>
+        /* Faculty's Digital Attendance Pass - Perfectly Centered & Mobile Optimized */
+        <div className="max-w-md mx-auto animate-fadeIn">
+          <div className="card p-6 sm:p-8 text-center space-y-4 border-2 border-teal-500/20 bg-gradient-to-b from-teal-50/20 to-white shadow-lg">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-teal-50 text-teal-800 rounded-full text-xs font-semibold border border-teal-200">
+              <ShieldCheck size={14} /> Digital Faculty Attendance Pass
+            </div>
 
-              <div className="p-4 bg-white rounded-2xl shadow-sm border border-slate-200 inline-block">
-                {qrDataUrl ? (
-                  <img
-                    src={qrDataUrl}
-                    alt="Faculty Attendance QR Code"
-                    className="w-56 h-56 mx-auto object-contain rounded-lg"
-                  />
-                ) : (
-                  <div className="w-56 h-56 flex items-center justify-center text-xs text-slate-400">
-                    Generating Faculty QR...
-                  </div>
-                )}
+            {/* Check-in status today indicator */}
+            {checkedInToday ? (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-semibold flex items-center justify-center gap-2">
+                <CheckCircle2 size={16} className="text-emerald-600" />
+                Checked In Today at {checkedInToday.time}
               </div>
-
-              <div>
-                <h3 className="text-lg font-bold text-navy-950">{facultyName}</h3>
-                <p className="text-xs font-mono font-semibold text-teal-700">{facultyId}</p>
-                <p className="text-xs text-slate-500 mt-1">
-                  {designation} • {department}
-                </p>
+            ) : (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs font-medium flex items-center justify-center gap-2">
+                <Clock size={16} className="text-amber-600 shrink-0" />
+                Show this QR code to Campus Admin desk to check in
               </div>
+            )}
 
-              <div className="flex gap-2 justify-center pt-2">
-                <button
-                  onClick={() => setFullscreenModal(true)}
-                  className="btn-secondary !py-2 !px-3 text-xs flex items-center gap-1.5"
-                >
-                  <Maximize2 size={13} /> Fullscreen
-                </button>
-                <button
-                  onClick={downloadFacultyQr}
-                  className="btn-primary !py-2 !px-3 text-xs flex items-center gap-1.5"
-                >
-                  <Download size={13} /> Download Pass
-                </button>
-              </div>
+            {/* Big High-Contrast QR Code */}
+            <div className="p-4 bg-white rounded-2xl shadow-sm border border-slate-200 inline-block w-full max-w-[280px] sm:max-w-[320px]">
+              {qrDataUrl ? (
+                <img
+                  src={qrDataUrl}
+                  alt="Faculty Attendance QR Code"
+                  className="w-full h-auto mx-auto object-contain rounded-lg aspect-square"
+                />
+              ) : (
+                <div className="w-56 h-56 flex items-center justify-center text-xs text-slate-400">
+                  Generating Faculty QR...
+                </div>
+              )}
+            </div>
 
-              <p className="text-[11px] text-slate-400 pt-2 border-t border-slate-100">
-                Show this permanent QR code to Campus Administration to verify your daily check-in.
+            <div>
+              <h3 className="text-lg sm:text-xl font-bold text-navy-950">{facultyName}</h3>
+              <p className="text-xs sm:text-sm font-mono font-bold text-teal-700 mt-0.5">{facultyId}</p>
+              <p className="text-xs text-slate-500 mt-1">
+                {designation} • {department}
               </p>
+              {facultyEmail && <p className="text-[11px] text-slate-400 font-mono mt-0.5">{facultyEmail}</p>}
             </div>
-          </div>
 
-          <div className="lg:col-span-2 space-y-4">
-            <div className="card p-5">
-              <h3 className="font-semibold text-navy-950 mb-3 flex items-center gap-2">
-                <Clock size={16} className="text-teal-600" /> My Admin Check-in History
-              </h3>
-              <DataTable
-                columns={["Date", "Check-in Time", "Department", "Status", "Verified By"]}
-                data={myFacultyCheckins}
-                emptyMessage="No attendance scans recorded by Admin yet. Show your QR pass to Administration to check in."
-                renderRow={(log) => (
-                  <>
-                    <td className="px-3 py-3 font-mono text-xs font-semibold text-navy-800">{log.date}</td>
-                    <td className="px-3 py-3 text-slate-600 text-xs font-medium">{log.time}</td>
-                    <td className="px-3 py-3 text-slate-600 text-xs">{log.department || department}</td>
-                    <td className="px-3 py-3">
-                      <span className="badge-green text-xs">Present</span>
-                    </td>
-                    <td className="px-3 py-3 text-xs text-slate-500">{log.scannedBy || "Campus Admin"}</td>
-                  </>
-                )}
-              />
+            <div className="flex gap-2 justify-center pt-2">
+              <button
+                onClick={() => setFullscreenModal(true)}
+                className="btn-secondary !py-2.5 !px-4 text-xs font-semibold flex items-center gap-1.5 flex-1 justify-center"
+              >
+                <Maximize2 size={14} /> Fullscreen
+              </button>
+              <button
+                onClick={downloadFacultyQr}
+                className="btn-primary !py-2.5 !px-4 text-xs font-semibold flex items-center gap-1.5 flex-1 justify-center"
+              >
+                <Download size={14} /> Download Pass
+              </button>
             </div>
+
+            <p className="text-[11px] text-slate-400 pt-3 border-t border-slate-100">
+              Hold this screen up to the Campus Administrator&apos;s camera to mark your daily faculty attendance.
+            </p>
           </div>
         </div>
       ) : (
         /* Teacher's Camera Scanner for Student Attendance */
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Controls Bar */}
-          <div className="card p-5">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="card p-4 sm:p-5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               <div>
                 <label className="label">Select Subject</label>
                 <select
-                  className="input"
+                  className="input text-xs"
                   value={selectedSubject}
                   onChange={(e) => setSelectedSubject(e.target.value)}
                 >
@@ -353,7 +348,7 @@ export default function FacultyQRAttendance() {
               <div>
                 <label className="label">Class / Cohort</label>
                 <select
-                  className="input"
+                  className="input text-xs"
                   value={selectedClass}
                   onChange={(e) => setSelectedClass(e.target.value)}
                 >
@@ -368,7 +363,7 @@ export default function FacultyQRAttendance() {
                 <label className="label">Attendance Date</label>
                 <input
                   type="date"
-                  className="input"
+                  className="input text-xs"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
                 />
@@ -376,14 +371,17 @@ export default function FacultyQRAttendance() {
             </div>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-6">
+          <div className="grid lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Camera Scanner View */}
-            <div className="card p-5 space-y-4">
+            <div className="card p-4 sm:p-5 space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-navy-950 flex items-center gap-2">
-                  <Camera size={18} className="text-teal-600" /> Live Classroom Scanner
-                </h3>
-                <span className="text-xs text-slate-400">Point at student&apos;s Attendance Pass</span>
+                <div>
+                  <h3 className="font-semibold text-navy-950 flex items-center gap-2 text-sm sm:text-base">
+                    <Camera size={18} className="text-teal-600" /> Live Classroom Scanner
+                  </h3>
+                  <p className="text-xs text-slate-500">Point at student&apos;s Attendance Pass</p>
+                </div>
+                <span className="badge-teal text-[11px]">Ready</span>
               </div>
 
               <QRScanner onScan={handleScan} />
@@ -408,10 +406,10 @@ export default function FacultyQRAttendance() {
             </div>
 
             {/* Live Class Attendance Roster */}
-            <div className="card p-5 space-y-4">
+            <div className="card p-4 sm:p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-semibold text-navy-950 flex items-center gap-2">
+                  <h3 className="font-semibold text-navy-950 flex items-center gap-2 text-sm sm:text-base">
                     <Users size={17} className="text-navy-600" /> Attendance Roster
                   </h3>
                   <p className="text-xs text-slate-500">
@@ -458,17 +456,17 @@ export default function FacultyQRAttendance() {
         onClose={() => setFullscreenModal(false)}
         title="Faculty Attendance Pass"
         footer={
-          <button className="btn-secondary" onClick={() => setFullscreenModal(false)}>
+          <button className="btn-secondary w-full" onClick={() => setFullscreenModal(false)}>
             Close
           </button>
         }
       >
-        <div className="text-center p-6 space-y-4">
+        <div className="text-center p-4 sm:p-6 space-y-3">
           {qrDataUrl && (
-            <img src={qrDataUrl} alt="Faculty QR Pass" className="w-80 h-80 mx-auto object-contain" />
+            <img src={qrDataUrl} alt="Faculty QR Pass" className="w-64 h-64 sm:w-80 sm:h-80 mx-auto object-contain" />
           )}
           <h3 className="text-xl font-bold text-navy-950">{facultyName}</h3>
-          <p className="font-mono text-sm font-semibold text-teal-700">{facultyId}</p>
+          <p className="font-mono text-sm font-bold text-teal-700">{facultyId}</p>
           <p className="text-xs text-slate-500">{department}</p>
         </div>
       </Modal>

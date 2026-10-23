@@ -11,6 +11,7 @@ import {
   UserCheck,
   Building2,
   Search,
+  Sparkles,
 } from "lucide-react";
 import PageHeader from "../../components/PageHeader";
 import QRScanner from "../../components/attendance/QRScanner";
@@ -39,9 +40,8 @@ export default function AdminQRManagement() {
     loadFaculty();
   }, []);
 
-  // Today's faculty check-ins
-  const todaysFacultyLogs = (facultyAttendanceLogs || []).filter((l) => l.date === todayStr);
-  const checkedInFacultyIds = new Set(todaysFacultyLogs.map((l) => l.facultyId || l.email));
+  // Today's teacher check-ins
+  const todaysTeacherLogs = (facultyAttendanceLogs || []).filter((l) => l.date === todayStr);
 
   function playSuccessChime() {
     try {
@@ -62,44 +62,44 @@ export default function AdminQRManagement() {
     }
   }
 
-  function handleFacultyScan(decodedText) {
+  function handleTeacherScan(decodedText) {
     if (!decodedText) return;
-    const facultyInfo = parseFacultyQrPayload(decodedText);
+    const teacherInfo = parseFacultyQrPayload(decodedText);
 
-    if (!facultyInfo) {
+    if (!teacherInfo) {
       setScanMessage({
         type: "error",
-        text: "Invalid QR code. Please scan a valid EduCloud Faculty Attendance Pass.",
+        text: "Invalid QR code. Please scan a valid Teacher Attendance Pass.",
       });
-      toast.error("Not an EduCloud Faculty Pass.");
+      toast.error("Not an EduCloud Teacher Pass.");
       return;
     }
 
-    const fid = facultyInfo.facultyId;
+    const fid = teacherInfo.facultyId;
     const nowTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-    // Check if faculty already checked in today
+    // Check if teacher was already checked in today
     const alreadyScanned = (facultyAttendanceLogs || []).find(
-      (l) => l.date === todayStr && (l.facultyId === fid || (facultyInfo.email && l.email === facultyInfo.email))
+      (l) => l.date === todayStr && (l.facultyId === fid || (teacherInfo.email && l.email === teacherInfo.email))
     );
 
     if (alreadyScanned) {
       setScanMessage({
         type: "warning",
-        text: `${facultyInfo.name} (${fid}) was ALREADY checked in today at ${alreadyScanned.time}!`,
+        text: `Teacher ${teacherInfo.name} (${fid}) was ALREADY checked in today at ${alreadyScanned.time}!`,
       });
-      toast.warning(`${facultyInfo.name} already checked in today.`);
+      toast.warning(`${teacherInfo.name} already checked in today.`);
       return;
     }
 
-    // Record check-in
+    // Record teacher check-in
     const newEntry = {
       id: `FATT-${Date.now()}`,
       facultyId: fid,
-      name: facultyInfo.name,
-      email: facultyInfo.email,
-      department: facultyInfo.department || "Academic Department",
-      designation: facultyInfo.designation || "Faculty Member",
+      name: teacherInfo.name,
+      email: teacherInfo.email,
+      department: teacherInfo.department || "Academic Department",
+      designation: teacherInfo.designation || "Teacher",
       date: todayStr,
       time: nowTime,
       status: "Present",
@@ -109,15 +109,15 @@ export default function AdminQRManagement() {
     setFacultyAttendanceLogs((prev) => [newEntry, ...(prev || [])]);
     setScanMessage({
       type: "success",
-      text: `Successfully verified check-in: ${facultyInfo.name} (${fid}) at ${nowTime}`,
+      text: `Teacher Verified: ${teacherInfo.name} (${fid}) checked in at ${nowTime}`,
     });
 
     playSuccessChime();
-    toast.success(`Faculty Checked In: ${facultyInfo.name}`);
+    toast.success(`Teacher Checked In: ${teacherInfo.name}`);
   }
 
   // Filtered logs for the historical view
-  const filteredFacultyLogs = (facultyAttendanceLogs || []).filter((l) => {
+  const filteredTeacherLogs = (facultyAttendanceLogs || []).filter((l) => {
     const q = search.toLowerCase();
     return (
       (l.name || "").toLowerCase().includes(q) ||
@@ -128,86 +128,88 @@ export default function AdminQRManagement() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <PageHeader
-        title="Faculty Attendance & QR Verification"
-        subtitle="Live camera scanner to scan teacher attendance passes and track institution check-ins"
+        title="Teacher Attendance Scanner"
+        subtitle="Live camera scanner to scan teacher attendance QR passes at entrance and record institution check-ins"
       />
 
-      {/* Mode Tabs */}
-      <div className="flex gap-2 p-1 bg-slate-100 rounded-2xl w-fit">
-        <button
-          onClick={() => setActiveTab("FACULTY_SCANNER")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-            activeTab === "FACULTY_SCANNER"
-              ? "bg-navy-900 text-white shadow-sm"
-              : "text-navy-700 hover:text-navy-950"
-          }`}
-        >
-          <Camera size={14} /> Scan Teacher Attendance
-        </button>
-        <button
-          onClick={() => setActiveTab("FACULTY_LOGS")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-            activeTab === "FACULTY_LOGS"
-              ? "bg-navy-900 text-white shadow-sm"
-              : "text-navy-700 hover:text-navy-950"
-          }`}
-        >
-          <Clock size={14} /> Faculty Attendance Logs ({facultyAttendanceLogs?.length || 0})
-        </button>
-        <button
-          onClick={() => setActiveTab("STUDENT_LOGS")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-            activeTab === "STUDENT_LOGS"
-              ? "bg-navy-900 text-white shadow-sm"
-              : "text-navy-700 hover:text-navy-950"
-          }`}
-        >
-          <Users size={14} /> Student Attendance Records ({studentMarks?.length || 0})
-        </button>
+      {/* Mode Tabs - Horizontally scrollable for mobile */}
+      <div className="overflow-x-auto scrollbar-none pb-1">
+        <div className="flex gap-2 p-1 bg-slate-100 rounded-2xl w-fit shrink-0">
+          <button
+            onClick={() => setActiveTab("FACULTY_SCANNER")}
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+              activeTab === "FACULTY_SCANNER"
+                ? "bg-navy-900 text-white shadow-sm"
+                : "text-navy-700 hover:text-navy-950"
+            }`}
+          >
+            <Camera size={14} /> Scan Teacher QR Passes
+          </button>
+          <button
+            onClick={() => setActiveTab("FACULTY_LOGS")}
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+              activeTab === "FACULTY_LOGS"
+                ? "bg-navy-900 text-white shadow-sm"
+                : "text-navy-700 hover:text-navy-950"
+            }`}
+          >
+            <Clock size={14} /> Teacher Attendance History ({facultyAttendanceLogs?.length || 0})
+          </button>
+          <button
+            onClick={() => setActiveTab("STUDENT_LOGS")}
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+              activeTab === "STUDENT_LOGS"
+                ? "bg-navy-900 text-white shadow-sm"
+                : "text-navy-700 hover:text-navy-950"
+            }`}
+          >
+            <Users size={14} /> Student Attendance Records ({studentMarks?.length || 0})
+          </button>
+        </div>
       </div>
 
       {activeTab === "FACULTY_SCANNER" && (
-        <div className="space-y-6">
-          {/* Summary KPIs for Today */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="space-y-4 sm:space-y-6">
+          {/* Summary KPIs explicitly showing TEACHERS */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             <div className="card p-4 border-l-4 border-navy-700">
-              <p className="text-xs font-semibold text-slate-400 uppercase">Total Faculty Roster</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase">Total Teachers</p>
               <p className="text-2xl font-bold text-navy-950 mt-1">{realFacultyList.length}</p>
             </div>
             <div className="card p-4 border-l-4 border-emerald-500">
-              <p className="text-xs font-semibold text-emerald-600 uppercase">Checked In Today</p>
-              <p className="text-2xl font-bold text-emerald-800 mt-1">{todaysFacultyLogs.length}</p>
+              <p className="text-xs font-semibold text-emerald-600 uppercase">Teachers Checked In Today</p>
+              <p className="text-2xl font-bold text-emerald-800 mt-1">{todaysTeacherLogs.length}</p>
             </div>
             <div className="card p-4 border-l-4 border-amber-500">
-              <p className="text-xs font-semibold text-amber-600 uppercase">Awaiting Check-in</p>
+              <p className="text-xs font-semibold text-amber-600 uppercase">Teachers Awaiting Check-In</p>
               <p className="text-2xl font-bold text-amber-800 mt-1">
-                {Math.max(0, realFacultyList.length - todaysFacultyLogs.length)}
+                {Math.max(0, realFacultyList.length - todaysTeacherLogs.length)}
               </p>
             </div>
             <div className="card p-4 border-l-4 border-teal-500">
-              <p className="text-xs font-semibold text-teal-600 uppercase">Today&apos;s Check-in Rate</p>
+              <p className="text-xs font-semibold text-teal-600 uppercase">Teacher Check-In Rate</p>
               <p className="text-2xl font-bold text-teal-800 mt-1">
-                {realFacultyList.length ? Math.round((todaysFacultyLogs.length / realFacultyList.length) * 100) : 0}%
+                {realFacultyList.length ? Math.round((todaysTeacherLogs.length / realFacultyList.length) * 100) : 0}%
               </p>
             </div>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-6">
+          <div className="grid lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Live Camera Scanner Box */}
-            <div className="card p-5 space-y-4">
+            <div className="card p-4 sm:p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-semibold text-navy-950 flex items-center gap-2">
-                    <Camera size={18} className="text-teal-600" /> Admin Camera Scanner
+                  <h3 className="font-semibold text-navy-950 flex items-center gap-2 text-sm sm:text-base">
+                    <Camera size={18} className="text-teal-600" /> Live Teacher Scanner
                   </h3>
-                  <p className="text-xs text-slate-500">Point camera at teacher&apos;s Faculty QR Pass</p>
+                  <p className="text-xs text-slate-500">Point camera at teacher&apos;s phone screen or QR pass</p>
                 </div>
-                <span className="badge-teal text-xs">Live Scanner Ready</span>
+                <span className="badge-teal text-[11px]">Ready</span>
               </div>
 
-              <QRScanner onScan={handleFacultyScan} />
+              <QRScanner onScan={handleTeacherScan} />
 
               {/* Status Alert */}
               {scanMessage && (
@@ -228,24 +230,24 @@ export default function AdminQRManagement() {
               )}
             </div>
 
-            {/* Today's Checked-in Faculty List */}
-            <div className="card p-5 space-y-4">
+            {/* Today's Checked-in Teachers List */}
+            <div className="card p-4 sm:p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-semibold text-navy-950 flex items-center gap-2">
-                    <UserCheck size={18} className="text-emerald-600" /> Faculty Checked In Today
+                  <h3 className="font-semibold text-navy-950 flex items-center gap-2 text-sm sm:text-base">
+                    <UserCheck size={18} className="text-emerald-600" /> Teachers Checked In Today
                   </h3>
                   <p className="text-xs text-slate-500">Date: {todayStr}</p>
                 </div>
                 <span className="badge-green text-xs font-semibold">
-                  {todaysFacultyLogs.length} Checked In
+                  {todaysTeacherLogs.length} Checked In
                 </span>
               </div>
 
               <DataTable
-                columns={["Faculty ID", "Name", "Department", "Check-in Time", "Status"]}
-                data={todaysFacultyLogs}
-                emptyMessage="No faculty check-ins scanned yet today. Point camera at teacher's QR pass to record attendance."
+                columns={["Teacher ID", "Teacher Name", "Department", "Check-in Time", "Status"]}
+                data={todaysTeacherLogs}
+                emptyMessage="No teachers checked in yet today. Point camera at teacher's QR pass to record attendance."
                 renderRow={(log) => (
                   <>
                     <td className="px-3 py-3 font-mono text-xs font-semibold text-navy-700">{log.facultyId}</td>
@@ -267,15 +269,15 @@ export default function AdminQRManagement() {
       )}
 
       {activeTab === "FACULTY_LOGS" && (
-        <div className="card p-5 space-y-4">
+        <div className="card p-4 sm:p-5 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h3 className="font-semibold text-navy-950">Complete Faculty Attendance Records</h3>
-            <div className="relative min-w-[240px]">
+            <h3 className="font-semibold text-navy-950 text-sm sm:text-base">Teacher Attendance History</h3>
+            <div className="relative min-w-[240px] w-full sm:w-auto">
               <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
-                className="input pl-9 text-xs !py-1.5"
-                placeholder="Search faculty, date, or department..."
+                className="input pl-9 text-xs !py-1.5 w-full"
+                placeholder="Search teacher, date, or department..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -283,9 +285,9 @@ export default function AdminQRManagement() {
           </div>
 
           <DataTable
-            columns={["Record ID", "Date", "Faculty Member", "Department", "Check-in Time", "Status", "Verified By"]}
-            data={filteredFacultyLogs}
-            emptyMessage="No faculty attendance records found."
+            columns={["Record ID", "Date", "Teacher", "Department", "Check-in Time", "Status", "Verified By"]}
+            data={filteredTeacherLogs}
+            emptyMessage="No teacher attendance records found."
             renderRow={(log) => (
               <>
                 <td className="px-3 py-3 font-mono text-xs font-medium text-slate-500">{log.id}</td>
@@ -307,8 +309,8 @@ export default function AdminQRManagement() {
       )}
 
       {activeTab === "STUDENT_LOGS" && (
-        <div className="card p-5 space-y-4">
-          <h3 className="font-semibold text-navy-950">Student Attendance Scans (Verified by Teachers)</h3>
+        <div className="card p-4 sm:p-5 space-y-4">
+          <h3 className="font-semibold text-navy-950 text-sm sm:text-base">Student Attendance Scans (Verified by Teachers)</h3>
           <DataTable
             columns={["Student Roll No", "Name", "Subject", "Class", "Date", "Time", "Teacher", "Status"]}
             data={studentMarks || []}
