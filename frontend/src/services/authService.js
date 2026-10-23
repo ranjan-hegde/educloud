@@ -31,6 +31,29 @@ export function syncStudentToRoster(user) {
   }
 }
 
+export function syncFacultyToRoster(user) {
+  if (!user || user.role !== "faculty") return;
+  try {
+    const rawId = user.facultyId || user.id || "FAC2601";
+    const faculty = storageService.getData("faculty") || [];
+    if (!faculty.some((f) => f.email === user.email || f.id === String(rawId))) {
+      storageService.addData("faculty", {
+        id: String(rawId),
+        name: user.name || "Faculty Member",
+        email: user.email,
+        phone: user.phone || "",
+        department: user.department || "Computer Science",
+        designation: user.designation || "Assistant Professor",
+        subjects: Array.isArray(user.subjects) ? user.subjects.length : 1,
+        subjectNames: Array.isArray(user.subjects) ? user.subjects : [user.department || "Computer Science"],
+        status: "Active",
+      });
+    }
+  } catch {
+    // ignore
+  }
+}
+
 const DEMO_ACCOUNTS = {
   "student@example.com": { password: "demo1234", profile: currentStudent },
   "faculty@example.com": { password: "demo1234", profile: currentFaculty },
@@ -157,6 +180,8 @@ export async function login({ email, password, role }) {
 
       if (userRole === "student") {
         syncStudentToRoster(fullUser);
+      } else if (userRole === "faculty") {
+        syncFacultyToRoster(fullUser);
       }
 
       return { token: authData.token, user: fullUser };
@@ -262,6 +287,8 @@ export async function register(formData) {
 
   if (formData.role === "student") {
     syncStudentToRoster(profile);
+  } else if (formData.role === "faculty") {
+    syncFacultyToRoster(profile);
   }
 
   return delay({ success: true, message: "Registration successful. You can now log in.", profile }, 600);
@@ -327,6 +354,8 @@ export async function loginWithGoogle({ googleUser, role = "student" }) {
 
       if (userRole === "student") {
         syncStudentToRoster(fullUser);
+      } else if (userRole === "faculty") {
+        syncFacultyToRoster(fullUser);
       }
 
       return { token: authData.token, user: fullUser };
@@ -384,6 +413,8 @@ export async function loginWithGoogle({ googleUser, role = "student" }) {
 
   if (role === "student") {
     syncStudentToRoster(profile);
+  } else if (role === "faculty") {
+    syncFacultyToRoster(profile);
   }
 
   return delay({ token, user: profile }, 400);

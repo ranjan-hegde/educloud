@@ -1,14 +1,31 @@
 // studentService.js
 // Production student service with backend API integration and persistent local caching.
+// Strictly queries real database and registered student accounts; mock data is excluded.
 
 import api from "./api";
 import * as storageService from "./storageService";
-import { studentsList, currentStudent, subjectAttendance, attendanceSummary, attendanceTrend } from "../data/mockData";
+
+const MOCK_STUDENT_NAMES = new Set([
+  "Aarav Sharma",
+  "Diya Patel",
+  "Rohan Mehta",
+  "Ananya Iyer",
+  "Vikram Singh",
+  "Pooja Hegde",
+  "Rahul Verma",
+  "Sneha Kulkarni",
+  "Kavya Nair",
+  "Aditya Rao",
+  "Neha Joshi",
+  "Arjun Menon",
+  "Meera Pillai",
+  "Karan Bhat",
+  "Tanvi Deshmukh",
+]);
 
 export async function getStudents() {
   let backendStudents = [];
   try {
-    // Try faculty endpoint first, fallback to admin students
     let res;
     try {
       res = await api("/api/faculty/me/students");
@@ -27,7 +44,7 @@ export async function getStudents() {
         course: s.course || "BCA",
         semester: s.semester ? `${s.semester}th Semester` : "1st Semester",
         department: s.department || "Computer Applications",
-        attendance: s.attendance ?? 92,
+        attendance: s.attendance ?? 95,
         status: s.status || "Active",
       }));
     }
@@ -36,9 +53,9 @@ export async function getStudents() {
   }
 
   // Load from shared storage
-  const localStudents = storageService.getData("students") || studentsList;
+  const localStudents = storageService.getData("students") || [];
 
-  // Also include any newly registered student accounts from educloud_registered_users
+  // Also include newly registered student accounts from educloud_registered_users
   let registeredStudents = [];
   try {
     const rawReg = localStorage.getItem("educloud_registered_users");
@@ -48,9 +65,9 @@ export async function getStudents() {
         const p = acc?.profile;
         if (p && p.role === "student") {
           registeredStudents.push({
-            id: p.rollNo || p.studentId || p.id,
-            rollNo: p.rollNo || p.studentId || p.id,
-            name: p.name,
+            id: String(p.rollNo || p.studentId || p.id || `STU${Date.now().toString().slice(-4)}`),
+            rollNo: String(p.rollNo || p.studentId || p.id || `STU${Date.now().toString().slice(-4)}`),
+            name: p.name || "Student",
             email: p.email,
             phone: p.phone || "",
             course: p.course || "BCA",
@@ -66,11 +83,40 @@ export async function getStudents() {
     // ignore
   }
 
-  // Merge unique by email / id
+  // Include currently logged in user if student
+  const curr = storageService.getCurrentUser();
+  if (curr && curr.role === "student") {
+    registeredStudents.push({
+      id: String(curr.rollNo || curr.studentId || curr.id || `STU${Date.now().toString().slice(-4)}`),
+      rollNo: String(curr.rollNo || curr.studentId || curr.id || `STU${Date.now().toString().slice(-4)}`),
+      name: curr.name || "Student",
+      email: curr.email,
+      phone: curr.phone || "",
+      course: curr.course || "BCA",
+      semester: curr.semester || "1st Semester",
+      department: curr.department || "Computer Applications",
+      attendance: 95,
+      status: "Active",
+    });
+  }
+
+  // Merge unique by email / id and filter out any mock student entries
   const map = new Map();
-  localStudents.forEach((s) => map.set(s.email || s.id, s));
-  backendStudents.forEach((s) => map.set(s.email || s.id, s));
-  registeredStudents.forEach((s) => map.set(s.email || s.id, s));
+  localStudents.forEach((s) => {
+    if (s && s.name && !MOCK_STUDENT_NAMES.has(s.name) && s.email !== "student@example.com") {
+      map.set(s.email || s.id, s);
+    }
+  });
+  backendStudents.forEach((s) => {
+    if (s && s.name && !MOCK_STUDENT_NAMES.has(s.name) && s.email !== "student@example.com") {
+      map.set(s.email || s.id, s);
+    }
+  });
+  registeredStudents.forEach((s) => {
+    if (s && s.name && !MOCK_STUDENT_NAMES.has(s.name) && s.email !== "student@example.com") {
+      map.set(s.email || s.id, s);
+    }
+  });
 
   const merged = Array.from(map.values());
   storageService.setData("students", merged);
@@ -84,8 +130,7 @@ export async function getStudentProfile() {
   } catch {
     // ignore
   }
-  const user = storageService.getCurrentUser();
-  return user || currentStudent;
+  return storageService.getCurrentUser();
 }
 
 export async function updateStudentProfile(updates) {
@@ -98,34 +143,19 @@ export async function updateStudentProfile(updates) {
   } catch {
     // ignore
   }
-  return { ...currentStudent, ...updates, updatedAt: new Date().toISOString() };
+  const curr = storageService.getCurrentUser() || {};
+  return { ...curr, ...updates };
 }
 
-export function getStudentAttendance() {
-  return { summary: attendanceSummary, subjects: subjectAttendance, trend: attendanceTrend };
-}
-
-export async function addStudent(student) {
+export async function getStudentAttendance() {
   try {
-    const res = await api("/api/admin/students", {
-      method: "POST",
-      body: JSON.stringify(student),
-    });
+    const res = await api("/api/attendance/student/me");
     if (res?.data || res) return res?.data || res;
   } catch {
     // ignore
   }
-  const newStudent = { ...student, id: student.rollNo || `STU${Math.floor(2000 + Math.random() * 900)}` };
-  storageService.addData("students", newStudent);
-  return newStudent;
-}
-
-export async function deleteStudent(id) {
-  try {
-    await api(`/api/admin/students/${id}`, { method: "DELETE" });
-  } catch {
-    // ignore
-  }
-  storageService.deleteData("students", id);
-  return { success: true, id };
+  const summary = storageService.getData("attendanceSummary");
+  const subjects = storageService.getData("subjectAttendance");
+  const trend = storageService.getData("attendanceTrend");
+  return { summary, subjects, trend };
 }

@@ -1,7 +1,20 @@
 import { Link } from "react-router-dom";
 import {
-  CalendarCheck, BookOpen, ClipboardList, Bell, GraduationCap, ArrowRight, Clock,
-  QrCode, ClipboardEdit, FolderOpen, MessageSquareText, Award, CalendarDays,
+  CalendarCheck,
+  BookOpen,
+  BookMarked,
+  ListTodo,
+  ClipboardList,
+  Bell,
+  GraduationCap,
+  ArrowRight,
+  Clock,
+  QrCode,
+  ClipboardEdit,
+  FolderOpen,
+  MessageSquareText,
+  Award,
+  CalendarDays,
 } from "lucide-react";
 import DashboardCard from "../../components/DashboardCard";
 import PageHeader from "../../components/PageHeader";
@@ -12,7 +25,9 @@ import { currentStudent, attendanceTrend, resultsData, subjects } from "../../da
 import { usePersistentState } from "../../hooks/usePersistentState";
 
 const quickActions = [
-  { label: "Scan Attendance QR", to: "/student/qr-attendance", icon: QrCode },
+  { label: "My Attendance QR Pass", to: "/student/qr-attendance", icon: QrCode },
+  { label: "Course Materials", to: "/student/materials", icon: BookMarked },
+  { label: "My Tasks", to: "/student/tasks", icon: ListTodo },
   { label: "View Timetable", to: "/student/timetable", icon: CalendarDays },
   { label: "View Assignments", to: "/student/assignments", icon: ClipboardList },
   { label: "View Results", to: "/student/results", icon: GraduationCap },
@@ -88,15 +103,19 @@ export default function StudentDashboard() {
         <div className="lg:col-span-2 card p-5">
           <div className="flex items-center justify-between mb-4">
             <p className="font-semibold text-navy-900">Attendance Trend</p>
-            <Link to="/student/attendance" className="text-xs font-semibold text-navy-600 hover:underline flex items-center gap-1">View details <ArrowRight size={12} /></Link>
+            <Link to="/student/attendance" className="text-xs font-semibold text-navy-600 hover:underline flex items-center gap-1">
+              View details <ArrowRight size={12} />
+            </Link>
           </div>
           <TrendLineChart data={attendanceTrend} dataKey="percentage" xKey="month" />
         </div>
 
         <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
-            <p className="font-semibold text-navy-900">Today's Classes</p>
-            <Link to="/student/timetable" className="text-xs font-semibold text-navy-600 hover:underline">Timetable</Link>
+            <p className="font-semibold text-navy-900">Today&apos;s Classes</p>
+            <Link to="/student/timetable" className="text-xs font-semibold text-navy-600 hover:underline">
+              Timetable
+            </Link>
           </div>
           {todaysClasses.length === 0 ? (
             <EmptyState icon={CalendarDays} title="No classes today" message="Check your timetable for the full weekly schedule." />
@@ -106,7 +125,9 @@ export default function StudentDashboard() {
                 <div key={c.id} className="flex items-center justify-between text-sm border-b border-surface-border last:border-0 pb-3 last:pb-0">
                   <div>
                     <p className="font-medium text-navy-800">{c.subject}</p>
-                    <p className="text-xs text-navy-400">{c.room} · {c.faculty}</p>
+                    <p className="text-xs text-navy-400">
+                      {c.room} · {c.faculty}
+                    </p>
                   </div>
                   <span className="text-xs font-semibold text-navy-500">{c.startTime}</span>
                 </div>
@@ -120,7 +141,9 @@ export default function StudentDashboard() {
         <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
             <p className="font-semibold text-navy-900">Pending Assignments</p>
-            <Link to="/student/assignments" className="text-xs font-semibold text-navy-600 hover:underline">View all</Link>
+            <Link to="/student/assignments" className="text-xs font-semibold text-navy-600 hover:underline">
+              View all
+            </Link>
           </div>
           {pending.length === 0 ? (
             <EmptyState icon={ClipboardList} title="No pending assignments" message="You're all caught up." />
@@ -142,7 +165,9 @@ export default function StudentDashboard() {
         <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
             <p className="font-semibold text-navy-900">Recent Notifications</p>
-            <Link to="/student/notifications" className="text-xs font-semibold text-navy-600 hover:underline">View all</Link>
+            <Link to="/student/notifications" className="text-xs font-semibold text-navy-600 hover:underline">
+              View all
+            </Link>
           </div>
           {unread.length === 0 ? (
             <EmptyState icon={Bell} title="No new notifications" message="You're all caught up." />
@@ -163,16 +188,29 @@ export default function StudentDashboard() {
         <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
             <p className="font-semibold text-navy-900">Upcoming Assessments</p>
-            <Link to="/student/assessments" className="text-xs font-semibold text-navy-600 hover:underline">View all</Link>
+            <Link to="/student/assessments" className="text-xs font-semibold text-navy-600 hover:underline">
+              View all
+            </Link>
           </div>
           {upcomingAssessments.length === 0 ? (
-            <EmptyState icon={ClipboardEdit} title="No upcoming assessments" message="Your faculty haven't published any yet." action={<Link to="/student/assessments" className="btn-secondary !py-1.5 text-xs">View Assessments</Link>} />
+            <EmptyState
+              icon={ClipboardEdit}
+              title="No upcoming assessments"
+              message="Your faculty haven't published any yet."
+              action={
+                <Link to="/student/assessments" className="btn-secondary !py-1.5 text-xs">
+                  View Assessments
+                </Link>
+              }
+            />
           ) : (
             <div className="space-y-3">
               {upcomingAssessments.map((a) => (
                 <div key={a.id} className="text-sm">
                   <p className="font-medium text-navy-800">{a.subject}</p>
-                  <p className="text-xs text-navy-400">{a.title} · {a.date}</p>
+                  <p className="text-xs text-navy-400">
+                    {a.title} · {a.date}
+                  </p>
                 </div>
               ))}
             </div>
@@ -182,7 +220,9 @@ export default function StudentDashboard() {
         <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
             <p className="font-semibold text-navy-900">Course Materials</p>
-            <Link to="/student/subjects" className="text-xs font-semibold text-navy-600 hover:underline">View all</Link>
+            <Link to="/student/materials" className="text-xs font-semibold text-navy-600 hover:underline">
+              View all
+            </Link>
           </div>
           {recentMaterials.length === 0 ? (
             <EmptyState icon={FolderOpen} title="No materials yet" message="Notes, slides, and links from your faculty will appear here." />
@@ -191,7 +231,9 @@ export default function StudentDashboard() {
               {recentMaterials.map((m) => (
                 <div key={m.id} className="text-sm">
                   <p className="font-medium text-navy-800">{m.title}</p>
-                  <p className="text-xs text-navy-400">{m.subject} · {m.type}</p>
+                  <p className="text-xs text-navy-400">
+                    {m.subject} · {m.type}
+                  </p>
                 </div>
               ))}
             </div>
@@ -201,10 +243,21 @@ export default function StudentDashboard() {
         <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
             <p className="font-semibold text-navy-900">Recent Feedback</p>
-            <Link to="/student/feedback" className="text-xs font-semibold text-navy-600 hover:underline">View all</Link>
+            <Link to="/student/feedback" className="text-xs font-semibold text-navy-600 hover:underline">
+              View all
+            </Link>
           </div>
           {myFeedback.length === 0 ? (
-            <EmptyState icon={MessageSquareText} title="No feedback submitted" message="Share feedback on your subjects and faculty." action={<Link to="/student/feedback" className="btn-secondary !py-1.5 text-xs">Submit Feedback</Link>} />
+            <EmptyState
+              icon={MessageSquareText}
+              title="No feedback submitted"
+              message="Share feedback on your subjects and faculty."
+              action={
+                <Link to="/student/feedback" className="btn-secondary !py-1.5 text-xs">
+                  Submit Feedback
+                </Link>
+              }
+            />
           ) : (
             <div className="space-y-3">
               {myFeedback.map((f) => (
@@ -224,10 +277,14 @@ export default function StudentDashboard() {
             <GraduationCap size={20} className="text-navy-700" />
             <div>
               <p className="font-semibold text-navy-900 text-sm">Latest SGPA: {resultsData?.sgpa ?? "8.5"}</p>
-              <p className="text-xs text-navy-400">CGPA {resultsData?.cgpa ?? "8.4"} · {student.semester || resultsData?.semester || "1st Semester"}</p>
+              <p className="text-xs text-navy-400">
+                CGPA {resultsData?.cgpa ?? "8.4"} · {student.semester || resultsData?.semester || "1st Semester"}
+              </p>
             </div>
           </div>
-          <Link to="/student/results" className="btn-secondary !py-2">View Results</Link>
+          <Link to="/student/results" className="btn-secondary !py-2">
+            View Results
+          </Link>
         </div>
 
         <div className="card p-5 flex items-center justify-between gap-4">
@@ -236,7 +293,9 @@ export default function StudentDashboard() {
             {recentMark ? (
               <div>
                 <p className="font-semibold text-navy-900 text-sm">Recent Marks: {recentMark.subject}</p>
-                <p className="text-xs text-navy-400">{recentMark.total}/100 · Grade {recentMark.grade}</p>
+                <p className="text-xs text-navy-400">
+                  {recentMark.total}/100 · Grade {recentMark.grade}
+                </p>
               </div>
             ) : (
               <div>
@@ -245,7 +304,9 @@ export default function StudentDashboard() {
               </div>
             )}
           </div>
-          <Link to="/student/results" className="btn-secondary !py-2">View Results</Link>
+          <Link to="/student/results" className="btn-secondary !py-2">
+            View Results
+          </Link>
         </div>
       </div>
     </div>

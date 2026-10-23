@@ -10,7 +10,8 @@ import { departments, courses } from "../../data/mockData";
 import { useToast } from "../../context/ToastContext";
 import { usePersistentState } from "../../hooks/usePersistentState";
 import { nextId } from "../../utils/idGenerator";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import * as studentService from "../../services/studentService";
 
 const emptyForm = { name: "", email: "", phone: "", department: "", course: "", semester: 1, status: "Active" };
 
@@ -23,6 +24,16 @@ export default function AdminStudents() {
   const [form, setForm] = useState(emptyForm);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const toast = useToast();
+
+  useEffect(() => {
+    async function syncRealStudents() {
+      const real = await studentService.getStudents();
+      if (Array.isArray(real)) {
+        setItems(real);
+      }
+    }
+    syncRealStudents();
+  }, [setItems]);
 
   const filtered = items.filter((s) =>
     (!dept || s.department === dept) &&

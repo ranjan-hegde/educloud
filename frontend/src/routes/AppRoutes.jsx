@@ -22,6 +22,8 @@ import StudentResults from "../pages/student/Results";
 import StudentFees from "../pages/student/Fees";
 import StudentAssessments from "../pages/student/Assessments";
 import StudentAssignments from "../pages/student/Assignments";
+import StudentCourseMaterials from "../pages/student/CourseMaterials";
+import StudentTasks from "../pages/student/Tasks";
 import StudentFeedback from "../pages/student/Feedback";
 import StudentNotifications from "../pages/student/Notifications";
 import StudentChatbot from "../pages/student/Chatbot";
@@ -93,11 +95,13 @@ export default function AppRoutes() {
         <Route path="attendance" element={<StudentAttendance />} />
         <Route path="qr-attendance" element={<StudentQRAttendance />} />
         <Route path="subjects" element={<StudentSubjects />} />
+        <Route path="materials" element={<StudentCourseMaterials />} />
         <Route path="timetable" element={<StudentTimetable />} />
         <Route path="results" element={<StudentResults />} />
         <Route path="fees" element={<StudentFees />} />
         <Route path="assessments" element={<StudentAssessments />} />
         <Route path="assignments" element={<StudentAssignments />} />
+        <Route path="tasks" element={<StudentTasks />} />
         <Route path="feedback" element={<StudentFeedback />} />
         <Route path="notifications" element={<StudentNotifications />} />
         <Route path="chatbot" element={<StudentChatbot />} />

@@ -1,6 +1,6 @@
 // storageService.js
 // Production-ready data storage layer with USER-ISOLATED DATA PARTITIONS.
-// Guarantees each student and faculty member only sees their OWN data and records.
+// Enforces real data persistence and purges mock/sample placeholder data.
 
 import * as mock from "../data/mockData";
 import { getCookie } from "../utils/cookieUtils";
@@ -46,23 +46,121 @@ function resolveStorageKey(key) {
   return `user_${userIdent}_${key}`;
 }
 
+const MOCK_NAMES = new Set([
+  "Aarav Sharma",
+  "Diya Patel",
+  "Rohan Mehta",
+  "Ananya Iyer",
+  "Vikram Singh",
+  "Pooja Hegde",
+  "Rahul Verma",
+  "Sneha Kulkarni",
+  "Kavya Nair",
+  "Aditya Rao",
+  "Neha Joshi",
+  "Arjun Menon",
+  "Meera Pillai",
+  "Karan Bhat",
+  "Tanvi Deshmukh",
+  "Dr. Rajesh Sharma",
+  "Prof. Sneha Gupta",
+  "Dr. Amit Verma",
+  "Prof. Priya Nair",
+  "Dr. Suresh Rao",
+]);
+
+function getRegisteredAccountsByRole(role) {
+  const result = [];
+  try {
+    const raw = localStorage.getItem("educloud_registered_users");
+    if (raw) {
+      const regMap = JSON.parse(raw);
+      Object.values(regMap).forEach((acc) => {
+        const p = acc?.profile;
+        if (p && p.role === role) {
+          if (role === "faculty") {
+            result.push({
+              id: String(p.id || p.facultyId || `FAC${Date.now().toString().slice(-4)}`),
+              name: p.name || "Faculty Member",
+              email: p.email,
+              phone: p.phone || "",
+              department: p.department || "Computer Science",
+              designation: p.designation || "Assistant Professor",
+              subjects: Array.isArray(p.subjects) ? p.subjects.length : 1,
+              subjectNames: Array.isArray(p.subjects) ? p.subjects : ["Computer Science"],
+              status: "Active",
+            });
+          } else if (role === "student") {
+            result.push({
+              id: String(p.id || p.rollNo || `STU${Date.now().toString().slice(-4)}`),
+              rollNo: String(p.rollNo || p.id || `STU${Date.now().toString().slice(-4)}`),
+              name: p.name || "Student",
+              email: p.email,
+              phone: p.phone || "",
+              course: p.course || "BCA",
+              semester: p.semester || "1st Semester",
+              department: p.department || "Computer Applications",
+              attendance: 95,
+              status: "Active",
+            });
+          }
+        }
+      });
+    }
+  } catch {
+    // ignore
+  }
+
+  // Also include current user if matching role
+  const curr = getCurrentUser();
+  if (curr && curr.role === role) {
+    if (!result.some((r) => r.email === curr.email)) {
+      if (role === "faculty") {
+        result.push({
+          id: String(curr.id || curr.facultyId || `FAC${Date.now().toString().slice(-4)}`),
+          name: curr.name || "Faculty Member",
+          email: curr.email,
+          phone: curr.phone || "",
+          department: curr.department || "Computer Science",
+          designation: curr.designation || "Assistant Professor",
+          subjects: Array.isArray(curr.subjects) ? curr.subjects.length : 1,
+          subjectNames: Array.isArray(curr.subjects) ? curr.subjects : ["Computer Science"],
+          status: "Active",
+        });
+      } else if (role === "student") {
+        result.push({
+          id: String(curr.id || curr.rollNo || `STU${Date.now().toString().slice(-4)}`),
+          rollNo: String(curr.rollNo || curr.id || `STU${Date.now().toString().slice(-4)}`),
+          name: curr.name || "Student",
+          email: curr.email,
+          phone: curr.phone || "",
+          course: curr.course || "BCA",
+          semester: curr.semester || "1st Semester",
+          department: curr.department || "Computer Applications",
+          attendance: 95,
+          status: "Active",
+        });
+      }
+    }
+  }
+
+  return result;
+}
+
 const SEED_MAP = {
-  students: () => mock.studentsList,
-  faculty: () => mock.facultyList,
+  students: () => getRegisteredAccountsByRole("student"),
+  faculty: () => getRegisteredAccountsByRole("faculty"),
   departments: () => mock.departments,
   courses: () => mock.courses,
   subjects: () => mock.subjects,
-  timetable: () => mock.timetable,
-  locations: () => mock.savedLocations,
-  qrSessions: () => mock.qrSessions,
-  todaysClasses: () => mock.todaysClasses,
-  attendanceRecords: () => mock.liveAttendanceStudents,
+  timetable: () => [],
+  locations: () => [],
+  qrSessions: () => [],
+  todaysClasses: () => [],
+  attendanceRecords: () => [],
   subjectAttendance: () => {
     const user = getCurrentUser();
-    if (!user || user.email === "student@example.com" || user.id === "STU2301") {
-      return mock.subjectAttendance;
-    }
-    const userCourse = user.course || "BCA";
+    const userCourse = user?.course || "BCA";
     const userSubs = mock.subjects.filter((s) => !userCourse || s.course === userCourse);
     return (userSubs.length ? userSubs : mock.subjects).map((s) => ({
       subject: s.name,
@@ -73,44 +171,25 @@ const SEED_MAP = {
       status: "Good",
     }));
   },
-  attendanceSummary: () => {
-    const user = getCurrentUser();
-    if (!user || user.email === "student@example.com" || user.id === "STU2301") {
-      return mock.attendanceSummary;
-    }
-    return {
-      overall: 100,
-      present: 0,
-      absent: 0,
-      total: 0,
-    };
-  },
+  attendanceSummary: () => ({
+    overall: 100,
+    present: 0,
+    absent: 0,
+    total: 0,
+  }),
   attendanceTrend: () => {
-    const user = getCurrentUser();
-    if (!user || user.email === "student@example.com" || user.id === "STU2301") {
-      return mock.attendanceTrend;
-    }
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
     return months.map((m) => ({ month: m, percentage: 100 }));
   },
-  notifications: () => mock.notificationsList,
-  assignments: () => mock.assignmentsList,
-  assessments: () => mock.assessmentsList,
-  courseMaterials: () => mock.courseMaterialsList,
-  feedback: () => {
-    const user = getCurrentUser();
-    if (!user || user.email === "student@example.com" || user.id === "STU2301") {
-      return mock.feedbackList;
-    }
-    return [];
-  },
+  notifications: () => [],
+  assignments: () => [],
+  assessments: () => [],
+  courseMaterials: () => [],
+  feedback: () => [],
   feeStructure: () => {
     const user = getCurrentUser();
-    if (!user || user.email === "student@example.com" || user.id === "STU2301") {
-      return mock.feeStructure;
-    }
     return {
-      semester: user.semester || "1st Semester",
+      semester: user?.semester || "1st Semester",
       academicYear: "2026 - 2027",
       dueDate: "2026-11-30",
       totalAmount: 48000,
@@ -124,8 +203,9 @@ const SEED_MAP = {
       ],
     };
   },
-  requests: () => mock.requestsList,
-  facultyTasks: () => mock.facultyTasksList,
+  requests: () => [],
+  facultyTasks: () => [],
+  facultyAttendanceLog: () => [],
   studentAttendanceMarks: () => [],
   studentMarksOverrides: () => ({}),
   marksRecords: () => ({}),
@@ -133,9 +213,80 @@ const SEED_MAP = {
   userPreferences: () => ({ email: true, sms: false, push: true, theme: "light", language: "English" }),
 };
 
+/** Purge mock entries from state to leave strictly real data */
+function sanitizeNamespace(ns) {
+  let changed = false;
+
+  // Filter students: remove mock names
+  if (Array.isArray(ns.students)) {
+    const cleanStudents = ns.students.filter(
+      (s) => !MOCK_NAMES.has(s.name) && s.email !== "student@example.com"
+    );
+    if (cleanStudents.length !== ns.students.length) {
+      ns.students = cleanStudents;
+      changed = true;
+    }
+  }
+
+  // Filter faculty: remove mock names
+  if (Array.isArray(ns.faculty)) {
+    const cleanFaculty = ns.faculty.filter(
+      (f) => !MOCK_NAMES.has(f.name) && f.email !== "faculty@example.com"
+    );
+    if (cleanFaculty.length !== ns.faculty.length) {
+      ns.faculty = cleanFaculty;
+      changed = true;
+    }
+  }
+
+  // Filter materials: remove any referencing mock faculty
+  if (Array.isArray(ns.courseMaterials)) {
+    const cleanMaterials = ns.courseMaterials.filter(
+      (m) => !MOCK_NAMES.has(m.faculty) && !MOCK_NAMES.has(m.facultyName)
+    );
+    if (cleanMaterials.length !== ns.courseMaterials.length) {
+      ns.courseMaterials = cleanMaterials;
+      changed = true;
+    }
+  }
+
+  // Filter tasks: remove mock task titles
+  if (Array.isArray(ns.facultyTasks)) {
+    const mockTaskTitles = new Set([
+      "Review Java OOP assignment submissions",
+      "Prepare Internal Assessment 1 question paper",
+      "Post attendance summary for August",
+    ]);
+    const cleanTasks = ns.facultyTasks.filter((t) => !mockTaskTitles.has(t.title));
+    if (cleanTasks.length !== ns.facultyTasks.length) {
+      ns.facultyTasks = cleanTasks;
+      changed = true;
+    }
+  }
+
+  // Filter requests: remove mock requests
+  if (Array.isArray(ns.requests)) {
+    const cleanReqs = ns.requests.filter(
+      (r) => !MOCK_NAMES.has(r.facultyName) && r.facultyEmail !== "faculty@example.com"
+    );
+    if (cleanReqs.length !== ns.requests.length) {
+      ns.requests = cleanReqs;
+      changed = true;
+    }
+  }
+
+  return { ns, changed };
+}
+
 function readNamespace() {
   try {
-    return JSON.parse(localStorage.getItem(NAMESPACE)) || {};
+    const raw = localStorage.getItem(NAMESPACE);
+    let ns = raw ? JSON.parse(raw) : {};
+    const { ns: cleaned, changed } = sanitizeNamespace(ns);
+    if (changed) {
+      writeNamespace(cleaned);
+    }
+    return cleaned;
   } catch {
     return {};
   }

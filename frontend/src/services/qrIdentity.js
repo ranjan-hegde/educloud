@@ -53,6 +53,52 @@ export function parseStudentQrPayload(raw) {
   return null;
 }
 
+/**
+ * Builds a deterministic, unique QR payload for a faculty member that DOES NOT CHANGE.
+ * Serves as the teacher's digital Faculty Attendance Pass.
+ */
+export function buildFacultyQrPayload(faculty) {
+  const rawId = faculty.facultyId || faculty.id || "FAC2601";
+  return JSON.stringify({
+    app: APP_TAG,
+    type: "faculty-identity",
+    facultyId: String(rawId),
+    name: faculty.name || "Faculty Member",
+    email: faculty.email || "",
+    department: faculty.department || "Computer Science",
+    designation: faculty.designation || "Assistant Professor",
+  });
+}
+
+/** Parses a scanned faculty QR code. Returns decoded faculty identity or null. */
+export function parseFacultyQrPayload(raw) {
+  if (!raw) return null;
+  const trimmed = typeof raw === "string" ? raw.trim() : "";
+  try {
+    const data = JSON.parse(trimmed);
+    if (data && (data.type === "faculty-identity" || data.facultyId)) {
+      return {
+        facultyId: String(data.facultyId || data.id),
+        name: data.name || "Faculty Member",
+        email: data.email || "",
+        department: data.department || "Computer Science",
+        designation: data.designation || "Assistant Professor",
+      };
+    }
+  } catch {
+    if (/^FAC/i.test(trimmed)) {
+      return {
+        facultyId: trimmed,
+        name: `Faculty (${trimmed})`,
+        email: "",
+        department: "Computer Science",
+        designation: "Faculty Member",
+      };
+    }
+  }
+  return null;
+}
+
 export function buildSessionQrPayload(session) {
   return JSON.stringify({
     app: APP_TAG,
