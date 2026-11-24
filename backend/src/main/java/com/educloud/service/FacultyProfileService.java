@@ -10,6 +10,7 @@ import com.educloud.repository.AttendanceRepository;
 import com.educloud.repository.ClassStudentRepository;
 import com.educloud.repository.FacultyRepository;
 import com.educloud.repository.FacultySubjectAssignmentRepository;
+import com.educloud.repository.StudentRepository;
 import com.educloud.repository.UserRepository;
 import com.educloud.security.CurrentUserService;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ public class FacultyProfileService {
     private final UserRepository userRepository;
     private final FacultySubjectAssignmentRepository assignmentRepository;
     private final ClassStudentRepository classStudentRepository;
+    private final StudentRepository studentRepository;
     private final AttendanceRepository attendanceRepository;
     private final CurrentUserService currentUserService;
 
